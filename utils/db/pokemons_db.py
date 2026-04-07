@@ -1,7 +1,9 @@
+from datetime import datetime
+
 import discord
 
 from utils.logs.pretty_log import pretty_log
-from datetime import datetime
+
 # SQL SCRIPT
 """CREATE TABLE pokemons (
     pokemon_name TEXT PRIMARY KEY,
@@ -46,7 +48,7 @@ async def upsert_pokemon_db(
                     image_link = EXCLUDED.image_link,
                     last_updated = CURRENT_TIMESTAMP;
                 """,
-                pokemon_name,
+                pokemon_name.lower(),
                 dex_number,
                 rarity,
                 current_listing,
@@ -81,7 +83,7 @@ async def update_market_value(
     """
     Insert or update market value data for a Pokémon.
     """
-    
+
     try:
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
@@ -118,6 +120,7 @@ async def update_market_value(
 
         # Update cache as well
         from utils.cache.pokemon_cache import update_market_value_in_cache
+
         update_market_value_in_cache(
             pokemon_name=pokemon_name,
             dex_number=dex_number,
@@ -173,7 +176,7 @@ async def update_emoji_id(bot: discord, pokemon_name: str, emoji_id: str):
                 WHERE pokemon_name = $2;
                 """,
                 emoji_id,
-                pokemon_name,
+                pokemon_name.lower(),
             )
         pretty_log(
             message=f"✅ Updated emoji ID for Pokémon '{pokemon_name}' in database.",

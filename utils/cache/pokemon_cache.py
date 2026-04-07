@@ -42,6 +42,20 @@ def update_emoji_id_in_cache(pokemon_name: str, emoji_id: str):
             "cache",
             f"⚠️ Pokémon '{pokemon_name}' not found in cache to update emoji ID.",
         )
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        pokemon_cache[key]["emoji_id"] = emoji_id
+        pretty_log(
+            "cache",
+            f"✅ Updated emoji ID for Pokémon '{pokemon_name}' in cache.",
+        )
+    else:
+        pretty_log(
+            "cache",
+            f"⚠️ Pokémon '{pokemon_name}' not found in cache to update emoji ID.",
+        )
+
+
 def update_market_value_in_cache(
     pokemon_name: str,
     dex_number: int,
@@ -73,6 +87,29 @@ def update_market_value_in_cache(
             "cache",
             f"⚠️ Pokémon '{pokemon_name}' not found in cache to update market value.",
         )
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        pokemon_cache[key].update(
+            {
+                "dex_number": dex_number,
+                "lowest_market": lowest_market,
+                "current_listing": current_listing,
+                "true_lowest": true_lowest,
+                "listing_seen": listing_seen,
+                "image_link": image_link,
+                "rarity": rarity,
+            }
+        )
+        pretty_log(
+            "cache",
+            f"✅ Updated market value for Pokémon '{pokemon_name}' in cache.",
+        )
+    else:
+        pretty_log(
+            "cache",
+            f"⚠️ Pokémon '{pokemon_name}' not found in cache to update market value.",
+        )
+
 
 # 🍩────────────────────────────────────────────
 #        💤 Pokemon List Names
@@ -104,6 +141,15 @@ def fetch_pokemon_cache_entry(pokemon_name: str) -> dict | None:
         f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch entry.",
     )
     return None
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        return pokemon_cache[key]
+    pretty_log(
+        "cache",
+        f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch entry.",
+    )
+    return None
+
 
 def fetch_dex_number_cache(pokemon_name: str) -> int | None:
     if pokemon_name in pokemon_cache:
@@ -113,6 +159,15 @@ def fetch_dex_number_cache(pokemon_name: str) -> int | None:
         f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch dex number.",
     )
     return None
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        return pokemon_cache[key].get("dex_number")
+    pretty_log(
+        "cache",
+        f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch dex number.",
+    )
+    return None
+
 
 def fetch_rarity_cache(pokemon_name: str) -> str | None:
     if pokemon_name in pokemon_cache:
@@ -122,6 +177,15 @@ def fetch_rarity_cache(pokemon_name: str) -> str | None:
         f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch rarity.",
     )
     return None
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        return pokemon_cache[key].get("rarity")
+    pretty_log(
+        "cache",
+        f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch rarity.",
+    )
+    return None
+
 
 def fetch_image_link_cache(pokemon_name: str) -> str | None:
     if pokemon_name in pokemon_cache:
@@ -131,6 +195,15 @@ def fetch_image_link_cache(pokemon_name: str) -> str | None:
         f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch image link.",
     )
     return None
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        return pokemon_cache[key].get("image_link")
+    pretty_log(
+        "cache",
+        f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch image link.",
+    )
+    return None
+
 
 def fetch_emoji_id_cache(pokemon_name: str) -> str | None:
     if pokemon_name in pokemon_cache:
@@ -140,6 +213,15 @@ def fetch_emoji_id_cache(pokemon_name: str) -> str | None:
         f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch emoji ID.",
     )
     return None
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        return pokemon_cache[key].get("emoji_id")
+    pretty_log(
+        "cache",
+        f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch emoji ID.",
+    )
+    return None
+
 
 def fetch_current_listing_cache(pokemon_name: str) -> int | None:
     if pokemon_name in pokemon_cache:
@@ -149,10 +231,27 @@ def fetch_current_listing_cache(pokemon_name: str) -> int | None:
         f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch current listing.",
     )
     return None
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        return pokemon_cache[key].get("current_listing")
+    pretty_log(
+        "cache",
+        f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch current listing.",
+    )
+    return None
+
 
 def fetch_listing_seen_cache(pokemon_name: str) -> str | None:
     if pokemon_name in pokemon_cache:
         return pokemon_cache[pokemon_name].get("listing_seen")
+    pretty_log(
+        "cache",
+        f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch listing seen.",
+    )
+    return None
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        return pokemon_cache[key].get("listing_seen")
     pretty_log(
         "cache",
         f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch listing seen.",
