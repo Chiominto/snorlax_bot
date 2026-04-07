@@ -66,28 +66,9 @@ def update_market_value_in_cache(
     image_link: str,
     rarity: str,
 ):
-    if pokemon_name in pokemon_cache:
-        pokemon_cache[pokemon_name].update(
-            {
-                "dex_number": dex_number,
-                "lowest_market": lowest_market,
-                "current_listing": current_listing,
-                "true_lowest": true_lowest,
-                "listing_seen": listing_seen,
-                "image_link": image_link,
-                "rarity": rarity,
-            }
-        )
-        pretty_log(
-            "cache",
-            f"✅ Updated market value for Pokémon '{pokemon_name}' in cache.",
-        )
-    else:
-        pretty_log(
-            "cache",
-            f"⚠️ Pokémon '{pokemon_name}' not found in cache to update market value.",
-        )
+    # Normalize key to lowercase for case-insensitive handling
     key = pokemon_name.lower()
+
     if key in pokemon_cache:
         pokemon_cache[key].update(
             {
