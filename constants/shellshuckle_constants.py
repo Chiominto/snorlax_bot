@@ -124,7 +124,7 @@ class SHELLSHUCKLE_ROLES:
     gigantamax_snipe = 1490899119164756199
     golden_snipe = 1490899263931285525
     paldean_snipe = 1490899362849620121
-    exclusive_snipe = 1490899362849620121
+    exclusive_snipe = 1490981002108076052
     shiny_snipe = 1490982404431544320
 
 # 💦☁────────────────────────────────────────────💦☁
