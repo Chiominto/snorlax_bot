@@ -380,16 +380,17 @@ async def process_market_feed_message(
             or prev.get("image_link") != thumbnail_url
             or prev.get("rarity") != market_value_rarity
         )
+
         pokemon_cache[cache_key] = cache_update
         if needs_update:
             await update_market_value(
-                bot,
+                bot=bot,
                 pokemon_name=poke_name,
                 dex_number=int(poke_dex),
                 lowest_market=lowest_market,
                 current_listing=listed_price,
                 true_lowest=true_lowest,
-                listing_seen=listing_seen,
+                listing_seen=str(listing_seen),
                 image_link=thumbnail_url,
                 rarity=market_value_rarity,
             )

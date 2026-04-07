@@ -81,6 +81,7 @@ async def update_market_value(
     """
     Insert or update market value data for a Pokémon.
     """
+    
     try:
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
