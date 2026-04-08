@@ -82,6 +82,10 @@ class MessageCreateListener(commands.Cog):
             message.channel.id == SHELLSHUCKLE_TEXT_CHANNELS.autospawn
             and message.author.id == POKEMEOW_APPLICATION_ID
         ):
+            pretty_log(
+                message=f"Autospawn detected",
+                tag="info",
+            )
             await as_spawn_ping(self.bot, message)
 
 

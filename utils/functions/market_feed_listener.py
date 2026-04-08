@@ -45,8 +45,8 @@ SNIPE_MAP = {
     "mega": {"role": SHELLSHUCKLE_ROLES.mega_snipe},
     "event_exclusive": {"role": SHELLSHUCKLE_ROLES.exclusive_snipe},
 }
-enable_debug(f"{__name__}.process_market_feed_message")
-enable_debug(f"{__name__}.snipe_handler")
+#enable_debug(f"{__name__}.process_market_feed_message")
+#enable_debug(f"{__name__}.snipe_handler")
 def determine_rarity_from_name_and_author_icon(
     poke_name: str, author_icon_url: str, embed_color: int
 ) -> str:
