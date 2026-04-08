@@ -10,6 +10,7 @@ SHELL_SHUCKLE_SERVER_ID = 1490116594884411402
 #       SHELLSHUCKLE_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
 class SHELLSHUCKLE_TEXT_CHANNELS:
+    autospawn = 1491259323526021150
 
     # 🌊💙🤍───────────── Admin ─────────────💙🤍🌊
 

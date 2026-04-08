@@ -8,6 +8,7 @@ from constants.shellshuckle_constants import (
     SHELLSHUCKLE_TEXT_CHANNELS,
 )
 from utils.functions.market_feed_listener import process_market_feed_message
+from utils.listener_func.autospawn_listener import as_spawn_ping
 from utils.logs.pretty_log import pretty_log
 
 MARKET_FEED_CHANNELS = {
@@ -74,6 +75,14 @@ class MessageCreateListener(commands.Cog):
             await process_market_feed_message(
                 self.bot, message, market_category_id=SHELLSHUCKLE_CATEGORIES.MARKET
             )
+        # ————————————————————————————————
+        # 💤 Autospawn Listener
+        # ————————————————————————————————
+        if (
+            message.channel.id == SHELLSHUCKLE_TEXT_CHANNELS.autospawn
+            and message.author.id == POKEMEOW_APPLICATION_ID
+        ):
+            await as_spawn_ping(self.bot, message)
 
 
 # 🟣────────────────────────────────────────────
