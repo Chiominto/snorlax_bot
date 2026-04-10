@@ -50,6 +50,7 @@ async def upsert_webhook_url(
             upsert_webhook_url_into_cache(
                 bot_id=bot_id,
                 channel_id=channel_id,
+                channel_name=channel_name,
                 url=url,
             )
     except Exception as e:
@@ -94,6 +95,51 @@ async def fetch_all_webhook_urls(bot: discord.Client):
             include_trace=True,
         )
         return []
+
+
+async def fetch_webhook_url(
+    bot: discord.Client,
+    channel: discord.TextChannel,
+) -> dict | None:
+    bot_id = bot.user.id
+    channel_id = channel.id
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            row = await conn.fetchrow(
+                """
+                SELECT bot_id, bot_name, channel_id, channel_name, url
+                FROM webhook_url
+                WHERE bot_id = $1 AND channel_id = $2
+                """,
+                bot_id,
+                channel_id,
+            )
+            if not row:
+                pretty_log(
+                    message=f"⚠️ No webhook URL found for bot ID: {bot_id}, channel ID: {channel_id}",
+                    tag="db",
+                )
+                return None
+
+            webhook_entry = {
+                "bot_id": row["bot_id"],
+                "bot_name": row["bot_name"],
+                "channel_id": row["channel_id"],
+                "channel_name": row["channel_name"],
+                "url": row["url"],
+            }
+            pretty_log(
+                message=f"✅ Fetched webhook URL for bot ID: {bot_id}, channel ID: {channel_id}",
+                tag="db",
+            )
+            return webhook_entry
+    except Exception as e:
+        pretty_log(
+            message=f"❌ Failed to fetch webhook URL for bot ID: {bot_id}, channel ID: {channel_id}: {e}",
+            tag="error",
+            include_trace=True,
+        )
+        return None
 
 
 async def remove_webhook_url(

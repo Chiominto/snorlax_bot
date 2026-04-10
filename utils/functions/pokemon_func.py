@@ -1,10 +1,7 @@
+from constants.aesthetics import *
 from constants.paldea_galar_dict import dex, rarity_meta
 from constants.pokemons import *
-from constants.aesthetics import *
-from utils.cache.pokemon_cache import (
-    fetch_dex_number_cache,
-    fetch_pokemon_cache_entry
-)
+
 from utils.logs.debug_log import debug_enabled, debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
@@ -65,13 +62,20 @@ def get_dex_number_by_name(name: str) -> int | None:
     Returns the dex number for a given Pokémon name.
     Example: get_dex_number_by_name("flutter-mane") -> 987
     """
+    from utils.cache.pokemon_cache import (
+        fetch_dex_number_cache,
+        fetch_pokemon_cache_entry,
+    )
+
+    if "mega " in name.lower():
+        name.replace("mega ", "mega-")
 
     name = name.lower().strip()
     mon = ALL_MONS.get(name)
     if mon and "dex" in mon:
         return mon["dex"]
 
-    formatted_name = format_names_for_market_value_lookup(name)
+    formatted_name = format_name_for_pokemons_db_lookup(name)
     return fetch_dex_number_cache(formatted_name)
 
 
@@ -94,7 +98,7 @@ def get_name_via_dex(dex_number: str | int) -> str | None:
 # ✨───────────────────────────────────────────────
 
 
-def format_names_for_market_value_lookup(pokemon_name: str) -> str:
+def format_name_for_pokemons_db_lookup(pokemon_name: str) -> str:
     """Format Pokémon name for market value lookup."""
 
     if "-o" in pokemon_name:
@@ -235,13 +239,17 @@ def get_rarity(pokemon: str):
 # ✨───────────────────────────────────────────────
 def is_mon_in_game(pokemon_name: str) -> bool:
     """Check if a Pokémon exists in the game."""
+    from utils.cache.pokemon_cache import (
+        fetch_dex_number_cache,
+        fetch_pokemon_cache_entry,
+    )
 
     name_lower = pokemon_name.lower()
 
     if name_lower in IN_GAME_MONS_SET:
         return True
 
-    pokemon_name_formatted = format_names_for_market_value_lookup(pokemon_name)
+    pokemon_name_formatted = format_name_for_pokemons_db_lookup(pokemon_name)
 
     market_value = fetch_pokemon_cache_entry(pokemon_name_formatted)
 

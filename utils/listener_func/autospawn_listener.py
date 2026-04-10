@@ -1,12 +1,13 @@
 import re
 
 import discord
+
 from constants.aesthetics import *
-from constants.shellshuckle_constants import SHELLSHUCKLE_TEXT_CHANNELS, SHELLSHUCKLE_ROLES
+from constants.celestial_constants import CELESTIAL_ROLES, CELESTIAL_TEXT_CHANNELS
 from constants.paldea_galar_dict import *
-from utils.functions.webhook_func import send_webhook
 from utils.cache.pokemon_cache import fetch_pokemon_cache_entry
 from utils.functions.pokemon_func import format_price_w_coin, get_display_name
+from utils.functions.webhook_func import send_webhook
 from utils.logs.pretty_log import pretty_log
 
 # Colors that signify rare Pokémon (legendary/shiny/golden)
@@ -15,7 +16,7 @@ LEGENDARY_COLORS = {
     rarity_meta["shiny"]["color"],
     rarity_meta["golden"]["color"],
 }
-AUTO_SPAWN_ROLE_ID = SHELLSHUCKLE_ROLES.as_spawn_ping
+AUTO_SPAWN_ROLE_ID = CELESTIAL_ROLES.as_spawn_ping
 
 
 def format_discord_timestamp(value):
@@ -127,7 +128,6 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     is_paldean = dex_number and dex_number in paldea_galar_dict
     is_legendary_or_rare = embed.color and embed.color.value in LEGENDARY_COLORS
 
-
     # -------------------- Regular auto-spawn --------------------
     if not (is_paldean or is_legendary_or_rare):
         # Only ping AS Channel channel
@@ -144,7 +144,6 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
         )
         pretty_log(
             message=f"Auto-spawn ping sent: {log_pokemon_name} in #{message.channel.name}",
-
             tag="sent",
         )
 
@@ -152,7 +151,7 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
     # -------------------- Rare / shiny / Paldean spawn --------------------
 
-    mention_role = f"<@&{SHELLSHUCKLE_ROLES.as_rarespawn_ping}>"
+    mention_role = f"<@&{CELESTIAL_ROLES.as_rarespawn_ping}>"
 
     content = f"{mention_role} A wild {shiny_text}{rarity_info.get('emoji', '❓')} {pokemon_name} has appeared!"
 
@@ -163,7 +162,6 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     )
     pretty_log(
         message=f"Rare spawn ping sent: {shiny_text}{log_pokemon_name} in #{message.channel.name}",
-
         tag="sent",
     )
 
@@ -177,7 +175,6 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     if not market_value_info or not isinstance(market_value_info, dict):
         pretty_log(
             message=f"Market value not found for {log_pokemon_name or 'Unknown'}",
-
             tag="info",
         )
     else:
@@ -204,7 +201,7 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
         )
 
     rare_spawn_channel = getattr(message.guild, "get_channel", lambda x: None)(
-        SHELLSHUCKLE_TEXT_CHANNELS.rare_spawns
+        CELESTIAL_TEXT_CHANNELS.rare_spawns
     )
     if rare_spawn_channel:
         await send_webhook(

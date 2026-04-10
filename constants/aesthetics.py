@@ -1,4 +1,7 @@
 class Emojis:
+    loading = "<a:colorful_loading:1324199044456779807>"
+    check = "<a:green_check:1308730918692851733>"
+    error = "<:cross_cross:1312575756110397501>"
     shinygigantamax = "<:shinygigantamax:1490937145106628800>"
     Rare = "<:Rare:1490937209866420254>"
     Uncommon = "<:Uncommon:1490937226475868281>"

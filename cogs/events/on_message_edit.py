@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from constants.shellshuckle_constants import CC_SERVER_ID, POKEMEOW_APPLICATION_ID
+from constants.celestial_constants import CC_SERVER_ID, POKEMEOW_APPLICATION_ID
 from utils.logs.pretty_log import pretty_log
 
 triggers = {
@@ -64,4 +64,3 @@ class OnMessageEditCog(commands.Cog):
 # 🟣────────────────────────────────────────────
 async def setup(bot: commands.Bot):
     await bot.add_cog(OnMessageEditCog(bot))
-

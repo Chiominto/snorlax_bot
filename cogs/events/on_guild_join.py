@@ -3,16 +3,16 @@ from datetime import datetime
 import discord
 from discord.ext import commands
 
-from constants.shellshuckle_constants import (
-    SHELL_SHUCKLE_SERVER_ID,
+from constants.celestial_constants import (
+    BURGER_USER_ID,
     CC_SERVER_ID,
-    SHELLSHUCKLE_TEXT_CHANNELS,
-    BURGER_USER_ID
+    CELESTIAL_SERVER_ID,
+    CELESTIAL_TEXT_CHANNELS,
 )
 
-LOG_CHANNEL_ID = SHELLSHUCKLE_TEXT_CHANNELS.server_logs
+LOG_CHANNEL_ID = CELESTIAL_TEXT_CHANNELS.server_logs
 
-ALLOWED_GUILD_IDS = [SHELL_SHUCKLE_SERVER_ID, CC_SERVER_ID]
+ALLOWED_GUILD_IDS = [CELESTIAL_SERVER_ID, CC_SERVER_ID]
 
 from utils.logs.pretty_log import pretty_log
 
@@ -28,7 +28,7 @@ class OnGuildJoinCog(commands.Cog):
     async def on_guild_join(self, guild: discord.Guild):
         bot_owner = self.bot.get_user(BURGER_USER_ID)
         bot_name = self.bot.user.name if self.bot.user else "the bot"
-        main_guild: discord.Guild = self.bot.get_guild(SHELL_SHUCKLE_SERVER_ID)
+        main_guild: discord.Guild = self.bot.get_guild(CELESTIAL_SERVER_ID)
         if guild.id not in ALLOWED_GUILD_IDS:
             # Log the event to server log channel
             log_channel = main_guild.get_channel(LOG_CHANNEL_ID)

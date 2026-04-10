@@ -1,21 +1,21 @@
 import discord
 from discord.ext import commands
 
-from constants.shellshuckle_constants import (
+from constants.celestial_constants import (
     CC_SERVER_ID,
+    CELESTIAL_CATEGORIES,
+    CELESTIAL_TEXT_CHANNELS,
     POKEMEOW_APPLICATION_ID,
-    SHELLSHUCKLE_CATEGORIES,
-    SHELLSHUCKLE_TEXT_CHANNELS,
 )
 from utils.functions.market_feed_listener import process_market_feed_message
 from utils.listener_func.autospawn_listener import as_spawn_ping
 from utils.logs.pretty_log import pretty_log
 
 MARKET_FEED_CHANNELS = {
-    SHELLSHUCKLE_TEXT_CHANNELS.curs_feed,
-    SHELLSHUCKLE_TEXT_CHANNELS.shiny_feed,
-    SHELLSHUCKLE_TEXT_CHANNELS.golden_feed,
-    SHELLSHUCKLE_TEXT_CHANNELS.legendmegagmax_feed,
+    CELESTIAL_TEXT_CHANNELS.curs_feed,
+    CELESTIAL_TEXT_CHANNELS.shiny_feed,
+    CELESTIAL_TEXT_CHANNELS.golden_feed,
+    CELESTIAL_TEXT_CHANNELS.legendmegagmax_feed,
 }
 
 
@@ -73,13 +73,13 @@ class MessageCreateListener(commands.Cog):
         # ————————————————————————————————
         if message.channel.id in MARKET_FEED_CHANNELS:
             await process_market_feed_message(
-                self.bot, message, market_category_id=SHELLSHUCKLE_CATEGORIES.MARKET
+                self.bot, message, market_category_id=CELESTIAL_CATEGORIES.MARKET
             )
         # ————————————————————————————————
         # 💤 Autospawn Listener
         # ————————————————————————————————
         if (
-            message.channel.id == SHELLSHUCKLE_TEXT_CHANNELS.autospawn
+            message.channel.id == CELESTIAL_TEXT_CHANNELS.autospawn
             and message.author.id == POKEMEOW_APPLICATION_ID
         ):
             pretty_log(

@@ -18,13 +18,16 @@ async def load_webhook_url_cache(bot: discord.Client):
 
         for entry in webhook_urls:
             key = (entry["bot_id"], entry["channel_id"])
-            webhook_url_cache[key] = entry["url"]
+            webhook_url_cache[key] = {
+                "channel_name": entry["channel_name"],
+                "url": entry["url"],
+            }
 
         pretty_log(
             message=f"✅ Loaded {len(webhook_url_cache)} webhook URLs into cache.",
             tag="cache",
         )
-        
+
         if len(webhook_url_cache) == 0:
             pretty_log(
                 message="⚠️ Webhook URL cache is empty after loading.",
@@ -43,10 +46,14 @@ async def load_webhook_url_cache(bot: discord.Client):
 def upsert_webhook_url_into_cache(
     bot_id: int,
     channel_id: int,
+    channel_name: str,
     url: str,
 ):
     key = (bot_id, channel_id)
-    webhook_url_cache[key] = url
+    webhook_url_cache[key] = {
+        "channel_name": channel_name,
+        "url": url,
+    }
     pretty_log(
         message=f"✅ Upserted webhook URL into cache for bot ID: {bot_id}, channel ID: {channel_id}",
         tag="cache",

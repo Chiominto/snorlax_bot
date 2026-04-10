@@ -60,8 +60,7 @@ market_alert_cache: list[dict] = []
 #   "dex_number": int,
 #   "max_price": int,
 #   "channel_id": int,
-#   "role_id": Optional[int],
-#   "notify": bool,
+#   "ping": bool,
 # }
 # 🍩────────────────────────────────────────────
 #        💤 Market Alert Index Cache
@@ -77,6 +76,14 @@ _market_alert_index: dict[tuple[str, int], dict] = (
 #       "dex_number": int,
 #       "max_price": int,
 #       "channel_id": int,
-#       "role_id": Optional[int],
-#       "notify": bool,
+#       "ping": bool,
 #   }
+
+# 🍩────────────────────────────────────────────
+#        💤 Pokemon List Cache
+# 🍩────────────────────────────────────────────
+pokemon_list_cache: dict[str, int] = {}
+# Structure:
+# pokemon_list_cache = {
+#     "pokemon_name": "dex_number",
+#     }

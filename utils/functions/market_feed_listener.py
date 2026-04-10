@@ -4,15 +4,12 @@ import discord
 from discord import Embed
 
 from constants.aesthetics import Emojis
+from constants.celestial_constants import CELESTIAL_ROLES, CELESTIAL_TEXT_CHANNELS
 from constants.paldea_galar_dict import (
     Legendary_icon_url,
     get_rarity_by_color,
     icon_url_map,
     paldean_mons,
-)
-from constants.shellshuckle_constants import (
-    SHELLSHUCKLE_ROLES,
-    SHELLSHUCKLE_TEXT_CHANNELS,
 )
 from utils.cache.cache_list import (
     _market_alert_index,
@@ -34,19 +31,21 @@ ALLOWED_WEBHOOKS = {
     1490889694118940672,  # Golden
 }
 SNIPE_MAP = {
-    "common": {"role": SHELLSHUCKLE_ROLES.common_snipe},
-    "uncommon": {"role": SHELLSHUCKLE_ROLES.uncommon_snipe},
-    "rare": {"role": SHELLSHUCKLE_ROLES.rare_snipe},
-    "superrare": {"role": SHELLSHUCKLE_ROLES.super_rare_snipe},
-    "legendary": {"role": SHELLSHUCKLE_ROLES.legendary_snipe},
-    "shiny": {"role": SHELLSHUCKLE_ROLES.shiny_snipe},
-    "golden": {"role": SHELLSHUCKLE_ROLES.golden_snipe},
-    "gmax": {"role": SHELLSHUCKLE_ROLES.gigantamax_snipe},
-    "mega": {"role": SHELLSHUCKLE_ROLES.mega_snipe},
-    "event_exclusive": {"role": SHELLSHUCKLE_ROLES.exclusive_snipe},
+    "common": {"role": CELESTIAL_ROLES.common_snipe},
+    "uncommon": {"role": CELESTIAL_ROLES.uncommon_snipe},
+    "rare": {"role": CELESTIAL_ROLES.rare_snipe},
+    "superrare": {"role": CELESTIAL_ROLES.superrare_snipe},
+    "legendary": {"role": CELESTIAL_ROLES.legendary_snipe},
+    "shiny": {"role": CELESTIAL_ROLES.shiny_snipe},
+    "golden": {"role": CELESTIAL_ROLES.golden_snipe},
+    "gmax": {"role": CELESTIAL_ROLES.gigantamax_snipe},
+    "mega": {"role": CELESTIAL_ROLES.mega_snipe},
+    "event_exclusive": {"role": CELESTIAL_ROLES.exclusive_snipe},
 }
-#enable_debug(f"{__name__}.process_market_feed_message")
-#enable_debug(f"{__name__}.snipe_handler")
+
+
+# enable_debug(f"{__name__}.process_market_feed_message")
+# enable_debug(f"{__name__}.snipe_handler")
 def determine_rarity_from_name_and_author_icon(
     poke_name: str, author_icon_url: str, embed_color: int
 ) -> str:
@@ -71,6 +70,86 @@ def determine_rarity_from_name_and_author_icon(
         elif author_icon_url == Legendary_icon_url:
             rarity = "legendary"
     return rarity
+
+
+# 🟣────────────────────────────────────────────
+#        👂 Market Alert Handler
+# 🟣────────────────────────────────────────────
+async def handle_market_alert(
+    bot: discord.Client,
+    user_id: int,
+    user_name: str,
+    guild: discord.Guild,
+    original_id: str,
+    poke_name: str,
+    listed_price: int,
+    channel_id: int,
+    ping: bool,
+    amount: int,
+    lowest_market: int,
+    listing_seen: str,
+    embed: discord.Embed,
+):
+
+    alert_channel = guild.get_channel(channel_id)
+    if not alert_channel:
+        pretty_log(
+            "error",
+            f"Alert channel with ID {channel_id} not found in guild {guild.name}",
+        )
+        return
+
+    # Build embed
+    color = embed.color or 0x00FF00
+    alert_embed = discord.Embed(color=color)
+    if embed.thumbnail:
+        alert_embed.set_thumbnail(url=embed.thumbnail.url)
+    alert_embed.set_author(
+        name=embed.author.name if embed.author else "",
+        icon_url=embed.author.icon_url if embed.author else None,
+    )
+
+    # Buy command
+    alert_embed.add_field(name="Buy Command", value=f";m b {original_id}", inline=False)
+    alert_embed.add_field(name="ID", value=original_id, inline=True)
+    alert_embed.add_field(
+        name="Listed Price",
+        value=f"{Emojis.pokecoin} {listed_price:,}",
+        inline=True,
+    )
+    alert_embed.add_field(name="Amount", value=amount, inline=True)
+    alert_embed.add_field(
+        name="Lowest Market",
+        value=f"{Emojis.pokecoin} {lowest_market:,}",
+        inline=True,
+    )
+    alert_embed.add_field(
+        name="Listing Seen",
+        value=listing_seen,
+        inline=True,
+    )
+    alert_embed.set_footer(
+        text="Kindly check market listing before purchasing.",
+        icon_url=guild.icon.url if guild else None,
+    )
+    if ping:
+        content = f"<@{user_id}> {poke_name.title()} listed for {Emojis.pokecoin} {listed_price:,} each!"
+    else:
+        content = (
+            f"{poke_name.title()} listed for {Emojis.pokecoin} {listed_price:,} each!"
+        )
+    # await alert_channel.send(content=content, embed=alert_embed)
+    await send_webhook(
+        bot=bot,
+        channel=alert_channel,
+        content=content,
+        embed=alert_embed,
+    )
+
+    pretty_log(
+        "sent",
+        f"Market alert sent in channel {alert_channel.name} for {user_name} {poke_name.title()} at {listed_price:,}",
+    )
 
 
 async def snipe_handler(
@@ -113,7 +192,7 @@ async def snipe_handler(
     elif rarity == "event_exclusive":
         icon_url = embed.author.icon_url
         if poke_name.title() in paldean_mons:
-            second_rarity_role_id = SHELLSHUCKLE_ROLES.paldean_snipe
+            second_rarity_role_id = CELESTIAL_ROLES.paldean_snipe
             second_snipe_rarity_role = message.guild.get_role(second_rarity_role_id)
             debug_log(f"paldean_snipe role resolved to {second_snipe_rarity_role}")
         else:
@@ -135,7 +214,7 @@ async def snipe_handler(
     if ping_role_id:
         guild = message.guild
         role = guild.get_role(ping_role_id)
-        snipe_channel = guild.get_channel(SHELLSHUCKLE_TEXT_CHANNELS.market_snipe)
+        snipe_channel = guild.get_channel(CELESTIAL_TEXT_CHANNELS.market_snipe)
         debug_log(f"role resolved to {role}, snipe_channel resolved to {snipe_channel}")
         # snipe_channel = guild.get_channel(STRAYMONS__TEXT_CHANNELS.test_snipe)
         if role and snipe_channel:
@@ -290,7 +369,6 @@ async def process_market_feed_message(
                 pretty_log(
                     "snipe",
                     f"Detected snipe listing for {poke_name} #{poke_dex} at {listed_price} (lowest market unknown)",
-
                 )
                 lowest_market = "?"
                 await snipe_handler(
@@ -304,7 +382,54 @@ async def process_market_feed_message(
                     message,
                     embed,
                 )
+        # Check for market alerts
+        if not market_alert_cache:
+            debug_log("Market alert cache is empty, skipping alert checks.")
+            continue  # Skip if cache is empty
 
+        # ✅ O(1) lookup using indexed cache
+        alerts_to_check = [
+            alert
+            for key, alert in _market_alert_index.items()
+            if key[0].lower() == poke_name.lower()
+        ]
+        debug_log(f"Alerts to check: {alerts_to_check}")
+
+        for alert in alerts_to_check:
+            if not isinstance(alert, dict):
+                debug_log(f"Skipping alert (not a dict): {alert}")
+                continue
+            debug_log(
+                f"Checking alert for user {alert['user_name']} and pokemon {alert['pokemon']}"
+            )
+            debug_log(f"Alert type: {type(alert)}, value: {alert}")
+            if (
+                alert["pokemon"].lower() == poke_name.lower()
+                and listed_price <= alert["max_price"]
+            ):
+                ping = alert["ping"]
+                channel_id = alert["channel_id"]
+                user_name = alert["user_name"]
+                user_id = alert["user_id"]
+
+                debug_log(
+                    f"Triggering market alert for {user_name} on {poke_name} at price {listed_price}"
+                )
+                await handle_market_alert(
+                    bot=bot,
+                    user_name=user_name,
+                    user_id=user_id,
+                    guild=message.guild,
+                    original_id=original_id,
+                    poke_name=poke_name,
+                    listed_price=listed_price,
+                    channel_id=channel_id,
+                    ping=ping,
+                    amount=amount,
+                    lowest_market=lowest_market,
+                    listing_seen=listing_seen,
+                    embed=embed,
+                )
         # 💎────────────────────────────────────────────
         #           🏪 Update Market Value Cache & DB
         # 💎────────────────────────────────────────────
@@ -314,10 +439,6 @@ async def process_market_feed_message(
             poke_name, author_icon_url, embed_color
         )
         debug_log(f"Determined market value rarity: {market_value_rarity}")
-        pretty_log(
-            "info",
-            f"Determined market value rarity for {poke_name} #{poke_dex}: {market_value_rarity}",
-        )
         poke_dex = int(poke_dex)
         lowest_market_str = re.sub(
             r"<a?:\w+:\d+>", "", fields.get("Lowest Market", "0")
