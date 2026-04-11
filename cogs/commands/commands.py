@@ -215,18 +215,18 @@ class CommandsView(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.command(name="commands", description="View Iron Bundle's commands!")
+    @app_commands.command(name="commands", description="View Snorlax's commands!")
 
     async def commands(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer(thinking=True)
             guild = self.bot.get_guild(CELESTIAL_SERVER_ID)
             user = interaction.user
-            guild_obj = discord.Object(id=CELESTIAL_SERVER_ID)
+            #guild_obj = discord.Object(id=CELESTIAL_SERVER_ID)
 
             # Staff check
             # Flatten commands
-            all_commands = flatten_commands(self.bot.tree.get_commands(guild=guild_obj))
+            all_commands = flatten_commands(self.bot.tree.get_commands())
             command_map = {"Public": [], "Staff": []}
 
             staff_role = guild.get_role(CELESTIAL_ROLES.staff)
