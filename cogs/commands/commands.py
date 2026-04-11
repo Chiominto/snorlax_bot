@@ -215,7 +215,6 @@ class CommandsView(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @app_commands.guilds(discord.Object(id=CELESTIAL_SERVER_ID))
     @app_commands.command(name="commands", description="View Iron Bundle's commands!")
 
     async def commands(self, interaction: discord.Interaction):
