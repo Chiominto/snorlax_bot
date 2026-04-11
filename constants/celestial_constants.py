@@ -105,6 +105,7 @@ class CELESTIAL_CATEGORIES:
 #       CELESTIAL_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class CELESTIAL_ROLES:
+    staff = 1492431851573481533
     server_booster = 1492070911795269662
     _unknown = 1490876248577020086
     pokémeow = 1490117261824884991

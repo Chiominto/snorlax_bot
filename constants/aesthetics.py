@@ -15,3 +15,10 @@ class Emojis:
     mega = "<:mega:1490937413827039373>"
     gigantamax = "<:Gigantamax:1348638452035620964>"
     pokecoin = "<:PokeCoin:1349767346641698866>"
+
+class Thumbnails:
+    moon = "https://media.discordapp.net/attachments/1394913073520967680/1492434060843421888/image.png?ex=69db5108&is=69d9ff88&hm=609851af1b6916b3b72a25129b9bc476b47785ca9c7f5689aa91bf85c15a3546&=&format=webp&quality=lossless&width=480&height=480"
+
+
+class Dividers:
+    moon = "https://media.discordapp.net/attachments/1393740397905313912/1492431644706214011/image.png?ex=69db4ec8&is=69d9fd48&hm=757f5f4a7a384ee2d91cb948c7f8eab61a821fb8353301c1953f37a578bfd908&=&format=webp&quality=lossless&width=904&height=85"
