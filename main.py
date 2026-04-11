@@ -96,6 +96,10 @@ async def on_ready():
 
     await load_all_cache(bot)
 
+    try:
+        await bot.change_presence(activity=discord.Game(name="💤 /commands"))
+    except Exception:
+        pass
 
 # 🟣────────────────────────────────────────────
 #         ⚡ Main ⚡
