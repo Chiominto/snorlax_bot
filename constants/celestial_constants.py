@@ -13,7 +13,7 @@ CELESTIAL_SERVER_ID = 1490116594884411402
 class CELESTIAL_TEXT_CHANNELS:
 
     # 🌊💙🤍───────────── Admin ─────────────💙🤍🌊
-
+    off_topic = 1492732522516189225
     moderator_only = 1490470353099817033
     server_logs = 1490599209940947035
     message_logs = 1490599308012290138
@@ -105,6 +105,12 @@ class CELESTIAL_CATEGORIES:
 #       CELESTIAL_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class CELESTIAL_ROLES:
+    khy_role = 1490494779790983350
+    tip_jar_titan = 1492514117775392828
+    coin_saver = 1492514196829765752
+    grounded = 1492705946357600400
+    out_of_orbit = 1492706123806019704
+    giveaways = 1493045397575438470
     staff = 1492431851573481533
     server_booster = 1492070911795269662
     _unknown = 1490876248577020086

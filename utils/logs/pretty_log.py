@@ -31,6 +31,7 @@ TAGS = {
     "success": "🌟 SUCCESS",  # Star (Snorlax triumph)
     "cache": "🥛 CACHE",  # Milk bottle (Snorlax refresh)
     "schedule": "⏰ SCHEDULE",  # Alarm clock (Snorlax wakes up)
+    "snipe": "🧺 SNIPE",
 }
 
 # -------------------- 🎨 Snorlax ANSI Colors --------------------

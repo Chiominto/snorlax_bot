@@ -2,10 +2,10 @@ from utils.logs.pretty_log import pretty_log
 import discord
 from discord.ext import commands
 
-from Constants.aesthetic import *
+from constants.aesthetics import *
 from constants.celestial_constants import CELESTIAL_TEXT_CHANNELS
 
-from utils.essentials.role_checks import *
+from utils.functions.role_checks import *
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 from utils.logs.server_log import send_log_to_server_log
@@ -17,3 +17,10 @@ from utils.functions.get_pokemeow_reply import get_pokemeow_reply_member
 from utils.functions.webhook_func import send_webhook
 # Formats
 from utils.essentials.format import format_comma_pokecoins
+from utils.functions.colors import get_random_snorlax_color
+from constants.celestial_constants import (
+    CELESTIAL_ROLES,
+    CELESTIAL_SERVER_ID,
+    CELESTIAL_TEXT_CHANNELS,
+    KHY_USER_ID
+)

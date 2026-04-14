@@ -1,0 +1,292 @@
+import asyncio
+import random
+import time
+from datetime import datetime, timedelta
+
+import discord
+from discord import app_commands
+from discord.ext import commands, tasks
+
+import utils.cache.global_variables as globals
+from constants.aesthetics import Thumbnails as Decor_Thumbnails
+from constants.celestial_constants import (
+    CELESTIAL_ROLES,
+    CELESTIAL_SERVER_ID,
+    CELESTIAL_TEXT_CHANNELS,
+    KHY_USER_ID,
+    DEFAULT_EMBED_COLOR
+)
+from constants.giveaway import (
+    ALLOWED_JOIN_ROLES,
+    BLACKLISTED_ROLES,
+    DEFAULT_ALLOWED_DISPLAY,
+    REQUIRED_ROLES,
+    Extra_Entries,
+    format_roles_display,
+
+)
+from utils.functions.pretty_defer import pretty_defer
+from utils.logs.pretty_log import pretty_log
+from utils.functions.colors import get_random_snorlax_color
+
+TESTING = True
+ALLOWED_JOIN_ROLES = [
+    CELESTIAL_ROLES.celestialnova_,
+]
+
+
+def format_roles_display(role_ids, guild: discord.Guild) -> str:
+
+    if not role_ids:
+        return "None"
+
+    # Convert role IDs to role names
+    role_names = []
+    for role_id in role_ids:
+        role = guild.get_role(role_id)
+        if role:
+            role_names.append(role.name)
+        else:
+            continue  # Skip if role not found
+    return ", ".join(role_names) if role_names else "None"
+
+
+def build_snipe_ga_embed(
+    host: discord.Member,
+    prize: str,
+    entries: int = 0,
+    ends_at: datetime = None,
+    winner=None,
+    winner_count: int = None,
+    giveaway_type="clan",
+):
+    """Builds the embed for the snipe giveaway."""
+    ends_text = f"<t:{int(ends_at.timestamp())}:R>" if ends_at else "Unknown"
+    color = DEFAULT_EMBED_COLOR
+    # Support winner as None, a single Member, a list of Members, or a string of mentions
+    winner_mentions = ""
+    if winner:
+        if isinstance(winner, list):
+            winner_mentions = ", ".join(
+                [w.mention if hasattr(w, "mention") else str(w) for w in winner]
+            )
+        elif hasattr(winner, "mention"):
+            winner_mentions = winner.mention
+        else:
+            winner_mentions = str(winner)
+    if giveaway_type == "clan":
+        allowed_roles_display = format_roles_display(ALLOWED_JOIN_ROLES, host.guild)
+        allowed_roles_str = f"- **Allowed roles:** {allowed_roles_display}\n"
+
+    blacklisted_roles_display = format_roles_display(BLACKLISTED_ROLES, host.guild)
+    desc = f"""## SNIPE GIVEAWAY
+- **Hosted By:** {host.mention}
+{f'- **Number of Winners:** {winner_count}' if winner_count is not None else ''}
+- **Prize:** {prize}
+{allowed_roles_str}
+- **Blacklisted roles:** {blacklisted_roles_display}
+
+- **Entries:** {entries}
+- **Ends:** {ends_text}
+{f'- **Winner(s):** {winner_mentions}' if winner_mentions else ''}
+
+"""
+    guild = host.guild
+    embed = discord.Embed(description=desc, color=color)
+    embed.set_thumbnail(url=Decor_Thumbnails.SNIPE_GA_GIFT)
+    return embed
+
+
+class SnipeGAView(discord.ui.View):
+
+    def __init__(
+        self,
+        bot,
+        prize: str,
+        giveaway_type: str,
+        winners_count: int = 1,
+        author=None,
+        embed_color=None,
+        timeout=None,
+    ):
+        super().__init__(timeout=timeout)
+        self.bot = bot
+        self.prize = prize
+        self.author = author
+        self.host = author
+        self.winners_count = winners_count
+        self.giveaway_type = giveaway_type
+        self.timeout = timeout  # Explicitly store timeout
+        self.ends_at = (
+            datetime.now() + timedelta(seconds=timeout or 0) if timeout else None
+        )
+        self.joined_users = set()
+        self.message = None
+        self.winner = None
+        self.embed_color = embed_color
+        self.ended = False
+        self._timeout_task = asyncio.create_task(self._auto_end())
+
+    async def _auto_end(self):
+        try:
+            if self.timeout is None or self.timeout == 0:
+                return
+            await asyncio.sleep(self.timeout)
+            if not self.is_finished():
+                await self.end_giveaway()
+        except Exception as e:
+            pretty_log("error", f"SnipeGAView _auto_end error: {e}")
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        return True
+
+    @discord.ui.button(
+        label="Join Giveaway 🎉",
+        style=discord.ButtonStyle.green,
+        custom_id="snipe_ga_join",
+    )
+    async def join_button(
+        self, interaction: discord.Interaction, button: discord.ui.Button
+    ):
+        defer = await pretty_defer(interaction=interaction, content="Please wait....")
+
+        try:
+            # Prevent late joins
+            if self.ended or self.is_finished():
+                await defer.error("This giveaway has already ended.")
+                return
+
+            member = interaction.user
+            member_roles = {
+                r.id for r in member.roles
+            }  # Ensure member_roles is always defined
+
+            if self.giveaway_type == "clan":
+                # Exception: allow seafoam role if TESTING is True
+                missing_roles = [
+                    f"<@&{role_id}>"
+                    for role_id in ALLOWED_JOIN_ROLES
+                    if role_id not in member_roles
+                ]
+                has_seafoam = CELESTIAL_ROLES.seafoam in member_roles
+                if missing_roles and not (TESTING and has_seafoam):
+                    await defer.stop(
+                        f"❌ You are missing the required roles to join the giveaway: {', '.join(missing_roles)}"
+                    )
+                    return
+
+            blacklisted_roles = [
+                f"<@&{role_id}>"
+                for role_id in BLACKLISTED_ROLES
+                if role_id in member_roles
+            ]
+            if blacklisted_roles:
+                await defer.stop(
+                    f"❌ You are blacklisted from joining the giveaway due to: {', '.join(blacklisted_roles)}"
+                )
+                return
+
+            if member.id in self.joined_users:
+                await defer.stop("❌ You already joined the giveaway!")
+                return
+
+            self.joined_users.add(member.id)
+            await defer.success("You successfully joined the giveaway! Good luck! 🎉")
+
+            if self.message is None:
+                pretty_log("warn", "JoinButton pressed but self.message is None.")
+                return
+
+            new_embed = build_snipe_ga_embed(
+                host=self.host,
+                prize=self.prize,
+                entries=len(self.joined_users),
+                giveaway_type=self.giveaway_type,
+                ends_at=self.ends_at,
+                winner_count=self.winners_count,
+            )
+            await self.message.edit(embed=new_embed)
+
+        except Exception as e:
+            pretty_log("error", f"JoinButton error: {e}")
+            await defer.stop("❌ Something went wrong joining the giveaway.")
+
+    def stop(self):
+        try:
+            if hasattr(self, "_timeout_task"):
+                self._timeout_task.cancel()
+        except Exception as e:
+            pretty_log("warn", f"Error cancelling _timeout_task: {e}")
+
+        for child in self.children:
+            child.disabled = True
+        try:
+            if self.message:
+                asyncio.create_task(self.message.edit(view=self))
+        except Exception as e:
+            pretty_log("error", f"SnipeGAView stop error: {e}")
+
+        super().stop()
+
+    async def end_giveaway(self, reroll_view=None):
+        if self.ended:
+            return
+        self.ended = True
+
+        if not self.joined_users:
+            await self.message.channel.send("😞 No one joined the snipe giveaway.")
+            self.stop()
+            return
+
+        guild = self.message.guild
+
+        # Random fair selection for multiple winners
+        winners_count = getattr(self, "winners_count", 1)
+        winner_ids = random.sample(
+            list(self.joined_users), min(winners_count, len(self.joined_users))
+        )
+        winners = [guild.get_member(wid) for wid in winner_ids if guild.get_member(wid)]
+
+        if not winners:
+            pretty_log("warn", "No valid winner could be selected in snipe giveaway.")
+            await self.message.channel.send("⚠️ No valid winner could be selected.")
+            self.stop()
+            return
+
+        # Store winners for later use
+        self.winner = winners
+
+        updated_embed = build_snipe_ga_embed(
+            giveaway_type=self.giveaway_type,
+            host=self.host,
+            prize=self.prize,
+            entries=len(self.joined_users),
+            ends_at=self.ends_at,
+            winner=", ".join([winner.mention for winner in winners]),
+        )
+        await self.message.edit(embed=updated_embed)
+
+        # Exclude winners from participant list
+        joiners_mentions = [
+            guild.get_member(uid).mention
+            for uid in self.joined_users
+            if guild.get_member(uid) and uid not in winner_ids
+        ]
+
+        content = f"🎊 Congrats {', '.join([winner.mention for winner in winners])} 🎊 for winning the **Snipe Giveaway**! 🏆✨"
+
+        desc = f"""### 🏅 Snipe Giveaway Winner(s):\n🎉 {', '.join([winner.mention for winner in winners])} 🎉\n"""
+
+        participants_desc = "👥 **Participants:**\n" + "\n".join(joiners_mentions)
+        full_description = desc + participants_desc
+
+        embed = discord.Embed(
+            description=full_description,
+            color=discord.Color.gold(),
+            timestamp=datetime.now(),
+        )
+        embed.set_thumbnail(url=Decor_Thumbnails.CELEBRATE)
+
+        await self.message.channel.send(content=content, embed=embed)
+
+        self.stop()

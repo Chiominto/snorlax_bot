@@ -269,7 +269,7 @@ async def snipe_handler(
                 )
                 pretty_log(
                     "snipe",
-                    f"Sent snipe alert for {display_pokemon_name} to channel {snipe_channel.id}",
+                    f"Sent snipe alert for {display_pokemon_name} at {listed_price:,} in channel {snipe_channel.name}",
                 )
             except Exception as e:
                 debug_log(f"Failed to send snipe alert: {e}")
@@ -346,10 +346,6 @@ async def process_market_feed_message(
             if lowest_market > 0 and listed_price <= lowest_market * 0.7:
                 debug_log(
                     f"Snipe detected for {poke_name} #{poke_dex}: listed_price={listed_price}, lowest_market={lowest_market}"
-                )
-                pretty_log(
-                    "snipe",
-                    f"Detected snipe listing for {poke_name} #{poke_dex} at {listed_price} (lowest market: {lowest_market})",
                 )
                 await snipe_handler(
                     bot,

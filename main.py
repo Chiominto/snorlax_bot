@@ -10,6 +10,7 @@ from utils.cache.central_cache_loader import load_all_cache
 from utils.cache.cache_list import clear_processed_ids_cache
 from utils.db.get_pg_pool import get_pg_pool
 from utils.logs.pretty_log import pretty_log, set_bot
+from utils.functions.restore_views import restore_giveaway_views
 
 # ---- Intents / Bot ----
 intents = discord.Intents.default()
@@ -18,6 +19,34 @@ intents.message_content = True
 intents.guilds = True
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 set_bot(bot)
+
+
+# ❀───────────────────────────────❀
+#   💖  App Command Error Handler 💖
+# ❀───────────────────────────────❀
+@bot.tree.error
+async def on_app_command_error(interaction, error):
+    from utils.functions.role_checks import (
+        OwnerCoownerCheckFailure,
+        StaffCheckFailure,
+    )
+
+    if isinstance(error, OwnerCoownerCheckFailure):
+        await interaction.response.send_message(str(error), ephemeral=True)
+    elif isinstance(error, StaffCheckFailure):
+        await interaction.response.send_message(str(error), ephemeral=True)
+
+    elif isinstance(error, app_commands.CheckFailure):
+        await interaction.response.send_message(
+            "You don't have permission to use this command.", ephemeral=True
+        )
+    else:
+        await interaction.response.send_message("An error occurred.", ephemeral=True)
+    pretty_log(
+        tag="info",
+        message=f"App command error: {error}",
+        include_trace=True,
+    )
 
 
 # 🟣────────────────────────────────────────────
@@ -96,6 +125,9 @@ async def on_ready():
 
     await load_all_cache(bot)
 
+    # Restore giveaway views
+    await restore_giveaway_views(bot)
+    
     try:
         await bot.change_presence(activity=discord.Game(name="💤 /commands"))
     except Exception:
