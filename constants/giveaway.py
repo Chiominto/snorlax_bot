@@ -24,9 +24,9 @@ DEFAULT_ALLOWED_DISPLAY = ", ".join(f"<@&{rid}>" for rid in ALLOWED_JOIN_ROLES)
 BLACKLISTED_DISPLAY = ", ".join(f"<@&{rid}>" for rid in BLACKLISTED_ROLES)
 
 Extra_Entries = {
-    CELESTIAL_ROLES.top_catcher: 1,
+    CELESTIAL_ROLES.top_catcher: 2,
     CELESTIAL_ROLES.server_booster: 1,
-    CELESTIAL_ROLES.elite_server_booster: 1,
+    CELESTIAL_ROLES.elite_server_booster: 2,
 }
 GIVEAWAY_ROLES = [
     CELESTIAL_ROLES.celestialnova_,
