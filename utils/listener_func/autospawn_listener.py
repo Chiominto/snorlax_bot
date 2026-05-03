@@ -139,7 +139,7 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
         await send_webhook(
             bot=bot,
-            channel_id=message.channel.id,
+            channel=message.channel,
             content=content,
         )
         pretty_log(
@@ -157,7 +157,7 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
     await send_webhook(
         bot=bot,
-        channel_id=message.channel.id,
+        channel=message.channel,
         content=content,
     )
     pretty_log(
@@ -206,7 +206,7 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     if rare_spawn_channel:
         await send_webhook(
             bot=bot,
-            channel_id=rare_spawn_channel.id,
+            channel=rare_spawn_channel,
             embed=rare_spawn_embed,
         )
     if not has_market_value:
@@ -223,6 +223,6 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     )
     await send_webhook(
         bot=bot,
-        channel_id=message.channel.id,
+        channel=message.channel,
         embed=value_embed,
     )
