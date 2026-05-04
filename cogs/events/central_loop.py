@@ -5,7 +5,7 @@ from discord.ext import commands
 from utils.logs.pretty_log import pretty_log
 
 # 🧹 Import your scheduled tasks
-from utils.background_tasks.giveaway_end_checker import giveaway_end_checker
+from utils.background_tasks.central_loop_task.giveaway_end_checker import giveaway_end_checker
 
 TEST_SECONDS = 1
 ACTUAL_SECONDS = 60

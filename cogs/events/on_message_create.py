@@ -7,6 +7,7 @@ from constants.celestial_constants import (
     CELESTIAL_TEXT_CHANNELS,
     POKEMEOW_APPLICATION_ID,
 )
+from utils.autoresponder.pray import handle_pray_autoresponder
 from utils.functions.market_feed_listener import process_market_feed_message
 from utils.listener_func.autospawn_listener import as_spawn_ping
 from utils.logs.pretty_log import pretty_log
@@ -56,6 +57,20 @@ class MessageCreateListener(commands.Cog):
         first_embed_title = (
             first_embed.title if first_embed and first_embed.title else ""
         )
+        # ————————————————————————————————
+        # 💤 Pray Listener
+        # ————————————————————————————————
+        if (
+            content
+            and content.lower().startswith("!pray")
+            and message.channel.id == CELESTIAL_TEXT_CHANNELS.fries_shrine
+        ):
+            pretty_log(
+                "info",
+                f"Detected !pray command message: Message ID {message.id}",
+                label="Pray Autoresponder",
+            )
+            await handle_pray_autoresponder(bot=self.bot, message=message)
 
         # ————————————————————————————————
         # 🏰 Ignore non-PokéMeow bot messages
