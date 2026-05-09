@@ -93,7 +93,7 @@ legendary_mons = [
 
 
 # palar_galar_dict
-# just replace the emojis at the bottom with infusion emoji
+# just replace the emojis at the bottom with celestial emoji
 from constants.aesthetics import *
 
 FISHING_COLOR = 0x87CEFA

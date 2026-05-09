@@ -102,7 +102,17 @@ celestial_members_cache: dict[int, dict] = {}
 #   "clan_treasury_doantion": int
 #   "date_joined": int
 # }
-
+# 🧩────────────────────────────────────────────
+#        ⚡ Server Currency Cache
+# 🧩────────────────────────────────────────────
+server_currency_cache: dict[int, dict] = {}
+# Structure:
+# user_id -> {
+#   "user_name": str,
+#   "currency": int,
+#   "raffle_ticket": int,
+#   "fry_points": int,
+# }
 
 processing_end_giveaway_message_ids = set()
 

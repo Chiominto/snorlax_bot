@@ -6,7 +6,6 @@ from utils.logs.pretty_log import pretty_log
 
 
 async def load_webhook_url_cache(bot: discord.Client):
-    webhook_url_cache.clear()
     try:
         webhook_urls = await fetch_all_webhook_urls(bot)
         if not webhook_urls:
@@ -15,6 +14,8 @@ async def load_webhook_url_cache(bot: discord.Client):
                 tag="cache",
             )
             return
+
+        webhook_url_cache.clear()
 
         for entry in webhook_urls:
             key = (entry["bot_id"], entry["channel_id"])

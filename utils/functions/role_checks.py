@@ -66,7 +66,14 @@ def is_staff_member(member: discord.Member) -> bool:
     """
     Checks if a member has any vna staff roles.
     """
-    staff_role_ids = [CELESTIAL_ROLES.staff, CELESTIAL_ROLES.clan_owner_, CELESTIAL_ROLES.co_owner]
+    staff_role_ids = [CELESTIAL_ROLES.staff, CELESTIAL_ROLES.clan_owner_, CELESTIAL_ROLES.co_owner, CELESTIAL_ROLES.aurora_aide_]
     if any(role.id in staff_role_ids for role in member.roles):
         return True
     return False
+
+
+def is_clan_member(interaction: discord.Interaction) -> bool:
+    """Check if the user is a clan member based on their roles."""
+    clan_roles = {CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.aurora_aide_}
+    user_roles = {role.id for role in interaction.user.roles}
+    return not clan_roles.isdisjoint(user_roles)

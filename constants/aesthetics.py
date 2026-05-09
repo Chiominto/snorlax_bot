@@ -16,6 +16,7 @@ class Emojis:
     gigantamax = "<:Gigantamax:1348638452035620964>"
     pokecoin = "<:PokeCoin:1349767346641698866>"
     saint_fries = "<:RFB:1500458864892710953>"
+    starry_meal = "<:StarryMeal:1502134915968536606>"
 
 class Thumbnails:
     moon = "https://media.discordapp.net/attachments/1394913073520967680/1492434060843421888/image.png?ex=69db5108&is=69d9ff88&hm=609851af1b6916b3b72a25129b9bc476b47785ca9c7f5689aa91bf85c15a3546&=&format=webp&quality=lossless&width=480&height=480"

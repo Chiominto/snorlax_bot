@@ -1,15 +1,14 @@
 import time
+from datetime import datetime
+from typing import Literal
 
 import discord
+import pytz
 from discord.ext import commands
 from discord.ui import Button, Modal, TextInput, View
 
 from constants.aesthetics import *
-from constants.celestial_constants import (
-
-    CELESTIAL_TEXT_CHANNELS,
-
-)
+from constants.celestial_constants import CELESTIAL_TEXT_CHANNELS
 from utils.cache.global_variables import TESTING_GA
 from utils.db.ga_db import (
     update_giveaway_message_id,
@@ -187,11 +186,27 @@ async def create_giveaway_func(
     try:
         total_duration = parse_total_duration(duration)
     except ValueError as e:
+        error_text = (
+            str(e).strip()
+            or "Invalid duration format. Please use a format like '1d2h30m'."
+        )
         await interaction.response.send_message(
-            "Invalid duration format. Please use a format like '1d2h30m'.",
+            f"❌ {error_text}",
             ephemeral=True,
         )
         return
+
+    # 🌏 Pre-flight giveaway checks
+    MANILA_TZ = pytz.timezone("Asia/Manila")
+
+    end_dt = datetime.fromtimestamp(total_duration, tz=MANILA_TZ)
+
+    # Sunday end check
+    if end_dt.weekday() == 6:
+        return await interaction.response.send_message(
+            "❌ Giveaways cannot end on Sunday (Asia/Manila time). Please choose another duration.",
+            ephemeral=True,
+        )
     giveaway_type = "clan"
     channel_id = CELESTIAL_TEXT_CHANNELS.giveaways
 

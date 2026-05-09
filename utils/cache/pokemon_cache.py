@@ -37,12 +37,13 @@ def rebuild_pokemon_autocomplete_index() -> None:
 
 
 async def load_pokemon_cache(bot: discord.Client):
-    pokemon_cache.clear()
     try:
         pokemons = await fetch_all_pokemons(bot)
         if not pokemons:
             pretty_log("cache", "⚠️ No Pokémon entries found to load into cache.")
             return
+
+        pokemon_cache.clear()
 
         for entry in pokemons:
             pokemon_cache[entry["pokemon_name"]] = entry

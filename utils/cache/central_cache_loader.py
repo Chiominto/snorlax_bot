@@ -5,6 +5,7 @@ from utils.logs.pretty_log import pretty_log
 from .pokemon_cache import load_pokemon_cache
 
 from .webhook_url_cache import load_webhook_url_cache
+from .server_currency_cache import load_server_currency_cache
 
 
 async def load_all_cache(bot: discord.Client):
@@ -18,6 +19,9 @@ async def load_all_cache(bot: discord.Client):
 
         # Load Webhook URL Cache
         await load_webhook_url_cache(bot)
+
+        # Load Server Currency Cache
+        await load_server_currency_cache(bot)
 
 
     except Exception as e:

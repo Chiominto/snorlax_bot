@@ -1,24 +1,22 @@
 import random
 
 import discord
+
+from constants.aesthetics import Thumbnails
 from constants.celestial_constants import (
     CELESTIAL_ROLES,
     CELESTIAL_SERVER_ID,
     CELESTIAL_TEXT_CHANNELS,
     KHY_USER_ID,
-
 )
 from constants.server_currency import FRY_POINT_EMOJI
 from utils.db.server_cooldowns_db import (
     fetch_user_server_cooldown_for_type,
-    upsert_server_cooldown
+    upsert_server_cooldown,
 )
-from utils.db.server_currency_db import (
-    fetch_fry_points,
-    upsert_user_fry_points
-)
+from utils.db.server_currency_db import fetch_fry_points, upsert_user_fry_points
 from utils.logs.pretty_log import pretty_log
-from constants.aesthetics import Thumbnails
+
 # 1day in seconds
 PRAY_COOLDOWN = 24 * 60 * 60
 blessing_phrases = [
@@ -61,7 +59,7 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
     cooldown_type = "pray"
     clan_guild: discord.Guild = bot.get_guild(CELESTIAL_SERVER_ID)
 
-    # Check if user has infusion role or khy for testing
+    # Check if user has celestial role or khy for testing
     clan_role = clan_guild.get_role(CELESTIAL_ROLES.celestialnova_)
     if clan_role not in user.roles and user.id != KHY_USER_ID:
         return  # User doesn't have the role, ignore
