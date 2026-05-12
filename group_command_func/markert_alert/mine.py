@@ -113,8 +113,13 @@ async def mine_market_alert_func(bot, interaction: discord.Interaction):
 
     # Fetch user's market alerts from cache
     from utils.cache.market_alert_cache import fetch_user_alerts_from_cache
+    from utils.db.market_alert_db import fetch_market_alerts_for_user
 
     user_alerts = fetch_user_alerts_from_cache(user_id)
+    # Fallback to database if cache is empty
+    if not user_alerts:
+        user_alerts = await fetch_market_alerts_for_user(bot, user_id)
+
     if not user_alerts:
         await loader.error("You have no market alerts set up.")
         return
