@@ -5,6 +5,7 @@ from discord.ui import Button, View
 from constants.aesthetics import Emojis
 from constants.celestial_constants import DEFAULT_EMBED_COLOR
 from utils.functions.design_embed import design_embed
+from utils.functions.pokemon_func import get_display_name
 from utils.functions.pretty_defer import pretty_defer, pretty_error
 from utils.logs.pretty_log import pretty_log
 
@@ -64,11 +65,11 @@ class Market_Alerts_Paginator(View):
         )
         for idx, alert in enumerate(page_alerts, start=1 + self.page * self.per_page):
             ping_str = "Yes" if alert.get("ping") else "No"
-
+            display_name = get_display_name(alert["pokemon"], dex=False)
             embed.add_field(
-                name=f"{idx}. {alert['pokemon'].title()} #{alert['dex']}",
+                name=f"{idx}. {display_name} #{alert['dex']}",
                 value=(
-                    f"> - **Max Price:** {Emojis.pokecoin} {alert['max_price']}\n"
+                    f"> - **Max Price:** {Emojis.pokecoin} {alert['max_price']:,}\n"
                     f"> - **Channel:** <#{alert['channel_id']}>\n"
                     f"> - **Ping:** {ping_str}\n"
                 ),
