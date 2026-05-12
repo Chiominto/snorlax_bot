@@ -147,6 +147,11 @@ async def balance_leaderboard_func(
     if not user_balances:
         await loader.error("No balance data found.")
         return
+
+    fry_points_map = {
+        row["user_id"]: row.get("fry_points") or 0 for row in user_balances
+    }
+
     # Filter out users with all values as 0 or None; keep if any is > 0
     if type.lower() == "starry meal":
         filtered_balances = [
@@ -168,7 +173,23 @@ async def balance_leaderboard_func(
         ]
 
     # Sort by balance descending
-    sorted_balances = sorted(filtered_balances, key=lambda x: x[1], reverse=True)
+    if type == "all" and filtered_balances:
+        all_starry_meal_zero = all(balance == 0 for _, balance in filtered_balances)
+
+        if all_starry_meal_zero:
+            sorted_balances = sorted(
+                filtered_balances,
+                key=lambda x: fry_points_map.get(x[0], 0),
+                reverse=True,
+            )
+        else:
+            sorted_balances = sorted(
+                filtered_balances,
+                key=lambda x: (x[1], fry_points_map.get(x[0], 0)),
+                reverse=True,
+            )
+    else:
+        sorted_balances = sorted(filtered_balances, key=lambda x: x[1], reverse=True)
 
     # Create paginator
     paginator = Leaderboard_Paginator(bot, interaction.user, sorted_balances, type=type)
