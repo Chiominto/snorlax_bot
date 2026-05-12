@@ -200,14 +200,43 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
             name=field_name_str, value=current_listing_price_formatted or "N/A"
         )
 
+    rare_spawn_channel_id = CELESTIAL_TEXT_CHANNELS.rare_spawns
     rare_spawn_channel = getattr(message.guild, "get_channel", lambda x: None)(
-        CELESTIAL_TEXT_CHANNELS.rare_spawns
-    )
+        rare_spawn_channel_id
+    ) or bot.get_channel(rare_spawn_channel_id)
+
+    # Fallback fetch for cache-miss cases where get_channel returns None.
+    if not rare_spawn_channel and message.guild:
+        try:
+            rare_spawn_channel = await message.guild.fetch_channel(
+                rare_spawn_channel_id
+            )
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=f"Failed to fetch rare spawn channel ({rare_spawn_channel_id}): {e}",
+            )
+
     if rare_spawn_channel:
-        await send_webhook(
-            bot=bot,
-            channel=rare_spawn_channel,
-            embed=rare_spawn_embed,
+        try:
+            await send_webhook(
+                bot=bot,
+                channel=rare_spawn_channel,
+                embed=rare_spawn_embed,
+            )
+            pretty_log(
+                message=f"Rare spawn embed sent to #{rare_spawn_channel.name}",
+                tag="sent",
+            )
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=f"Failed sending rare spawn embed for {log_pokemon_name}: {e}",
+            )
+    else:
+        pretty_log(
+            tag="warning",
+            message=f"Rare spawn channel not found in guild cache/API (ID: {rare_spawn_channel_id})",
         )
     if not has_market_value:
         return
