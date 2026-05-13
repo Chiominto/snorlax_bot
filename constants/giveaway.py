@@ -2,9 +2,6 @@ import discord
 
 from constants.celestial_constants import (
     CELESTIAL_ROLES,
-    CELESTIAL_SERVER_ID,
-    CELESTIAL_TEXT_CHANNELS,
-    KHY_USER_ID
 )
 
 REQUIRED_ROLES = [
@@ -26,7 +23,6 @@ BLACKLISTED_DISPLAY = ", ".join(f"<@&{rid}>" for rid in BLACKLISTED_ROLES)
 Extra_Entries = {
     CELESTIAL_ROLES.top_catcher: 2,
     CELESTIAL_ROLES.server_booster: 1,
-    CELESTIAL_ROLES.elite_server_booster: 2,
 }
 GIVEAWAY_ROLES = [
     CELESTIAL_ROLES.celestialnova_,
@@ -36,7 +32,6 @@ GIVEAWAY_ROLES = [
     CELESTIAL_ROLES.coin_saver,
     CELESTIAL_ROLES.top_catcher,
     CELESTIAL_ROLES.server_booster,
-    CELESTIAL_ROLES.elite_server_booster,
 ]
 REG_GA_MIN_DURATION_SECONDS = 30 * 60
 
