@@ -218,24 +218,44 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
             )
 
     if rare_spawn_channel:
+        pretty_log(
+            tag="info",
+            message=f"Attempting rare spawn embed send to #{rare_spawn_channel.name} ({rare_spawn_channel.id})",
+        )
+
+        sent_to_rare_channel = False
         try:
             await send_webhook(
                 bot=bot,
                 channel=rare_spawn_channel,
                 embed=rare_spawn_embed,
             )
+            sent_to_rare_channel = True
             pretty_log(
-                message=f"Rare spawn embed sent to #{rare_spawn_channel.name}",
+                message=f"Rare spawn embed sent to #{rare_spawn_channel.name} via webhook",
                 tag="sent",
             )
         except Exception as e:
             pretty_log(
                 tag="error",
-                message=f"Failed sending rare spawn embed for {log_pokemon_name}: {e}",
+                message=f"Webhook send failed for rare spawn embed ({log_pokemon_name}) in #{rare_spawn_channel.name}: {e}",
             )
+
+        if not sent_to_rare_channel:
+            try:
+                await rare_spawn_channel.send(embed=rare_spawn_embed)
+                pretty_log(
+                    message=f"Rare spawn embed sent to #{rare_spawn_channel.name} via direct channel send fallback",
+                    tag="sent",
+                )
+            except Exception as e:
+                pretty_log(
+                    tag="error",
+                    message=f"Direct send fallback failed for rare spawn embed ({log_pokemon_name}) in #{rare_spawn_channel.name}: {e}",
+                )
     else:
         pretty_log(
-            tag="warning",
+            tag="warn",
             message=f"Rare spawn channel not found in guild cache/API (ID: {rare_spawn_channel_id})",
         )
     if not has_market_value:
