@@ -3,13 +3,16 @@ import re
 import discord
 
 from constants.aesthetics import *
-from constants.celestial_constants import CELESTIAL_ROLES, CELESTIAL_TEXT_CHANNELS
+from constants.celestial_constants import (CELESTIAL_ROLES,
+                                           CELESTIAL_TEXT_CHANNELS)
 from constants.paldea_galar_dict import *
 from utils.cache.pokemon_cache import fetch_pokemon_cache_entry
 from utils.functions.pokemon_func import format_price_w_coin, get_display_name
 from utils.functions.webhook_func import send_webhook
+from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
+enable_debug(f"{__name__}.as_spawn_ping")
 # Colors that signify rare Pokémon (legendary/shiny/golden)
 LEGENDARY_COLORS = {
     rarity_meta["legendary"]["color"],
@@ -78,6 +81,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     """
     # Ignore edited messages or messages without embeds
     if message.edited_at or not message.embeds:
+        debug_log(
+            f"Skipping message {getattr(message, 'id', 'N/A')}: edited_at={bool(message.edited_at)}, embeds={len(getattr(message, 'embeds', []))}"
+        )
         return
 
     embed = message.embeds[0]
@@ -85,6 +91,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
     # Only proceed if the embed title indicates a wild spawn
     if not (embed.title and "A wild" in embed.title):
+        debug_log(
+            f"Skipping message {getattr(message, 'id', 'N/A')}: title does not match wild spawn pattern -> {getattr(embed, 'title', None)!r}"
+        )
         return
 
     dex_number = None
@@ -108,12 +117,20 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
         rarity_key = rarity_key_map.get(raw_rarity_key, "unknown")
         rarity_info = rarity_meta.get(rarity_key, rarity_meta["unknown"])
         rarity_color = rarity_info["color"]
+        debug_log(
+            f"Parsed rarity from title: raw={raw_rarity_key}, normalized={rarity_key}, color={hex(rarity_color)}"
+        )
+    else:
+        debug_log("No rarity emoji match found in embed title; using unknown rarity")
 
     # Extract Dex number from embed title emoji
 
     dex_match = re.search(r"<:([0-9]+):\d+>", embed.title)
     if dex_match:
         dex_number = int(dex_match.group(1))
+        debug_log(f"Parsed dex number from title: {dex_number}")
+    else:
+        debug_log("No dex number emoji match found in embed title")
 
     # Determine Pokémon name
     if dex_number and dex_number in paldea_galar_dict:
@@ -127,6 +144,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
     is_paldean = dex_number and dex_number in paldea_galar_dict
     is_legendary_or_rare = embed.color and embed.color.value in LEGENDARY_COLORS
+    debug_log(
+        f"Spawn classification: pokemon={log_pokemon_name}, paldean={bool(is_paldean)}, legendary_or_rare={bool(is_legendary_or_rare)}, embed_color={getattr(getattr(embed, 'color', None), 'value', None)}"
+    )
 
     # -------------------- Regular auto-spawn --------------------
     if not (is_paldean or is_legendary_or_rare):
@@ -135,6 +155,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
         AUTO_SPAWN_ROLE_MENTION = f"<@&{AUTO_SPAWN_ROLE_ID}>"
         content = (
             f"{AUTO_SPAWN_ROLE_MENTION} A wild {emoji} {pokemon_name} has appeared!"
+        )
+        debug_log(
+            f"Sending regular auto-spawn ping to channel_id={getattr(message.channel, 'id', 'N/A')} with role_id={AUTO_SPAWN_ROLE_ID}"
         )
 
         await send_webhook(
@@ -154,6 +177,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     mention_role = f"<@&{CELESTIAL_ROLES.as_rarespawn_ping}>"
 
     content = f"{mention_role} A wild {shiny_text}{rarity_info.get('emoji', '❓')} {pokemon_name} has appeared!"
+    debug_log(
+        f"Sending rare/paldean ping to channel_id={getattr(message.channel, 'id', 'N/A')} with role_id={CELESTIAL_ROLES.as_rarespawn_ping}"
+    )
 
     await send_webhook(
         bot=bot,
@@ -170,6 +196,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     market_value_info = await fetch_pokemon_cache_entry(
         bot, log_pokemon_name or "Unknown"
     )
+    debug_log(
+        f"Market cache lookup for {log_pokemon_name or 'Unknown'} returned type={type(market_value_info).__name__}"
+    )
     current_listing_price = None
     last_seen = None
     if not market_value_info or not isinstance(market_value_info, dict):
@@ -177,11 +206,15 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
             message=f"Market value not found for {log_pokemon_name or 'Unknown'}",
             tag="info",
         )
+        debug_log(f"No usable market value info for {log_pokemon_name or 'Unknown'}")
     else:
         current_listing_price = market_value_info.get("current_listing")
         last_seen = market_value_info.get("listing_seen", "N/A")
         if current_listing_price is not None and current_listing_price != 0:
             has_market_value = True
+        debug_log(
+            f"Market value parsed: current_listing={current_listing_price}, last_seen={last_seen}, has_market_value={has_market_value}"
+        )
 
     message_link = f"https://discord.com/channels/{getattr(message.guild, 'id', '0')}/{getattr(message.channel, 'id', '0')}/{getattr(message, 'id', '0')}"
     desc = f"A wild {rarity_info.get('emoji', '❓')} {pokemon_name or 'Unknown Pokémon'} has spawned!"
@@ -204,6 +237,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     rare_spawn_channel = getattr(message.guild, "get_channel", lambda x: None)(
         rare_spawn_channel_id
     ) or bot.get_channel(rare_spawn_channel_id)
+    debug_log(
+        f"Resolved rare spawn channel from cache: found={bool(rare_spawn_channel)}, channel_id={rare_spawn_channel_id}"
+    )
 
     # Fallback fetch for cache-miss cases where get_channel returns None.
     if not rare_spawn_channel and message.guild:
@@ -211,10 +247,16 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
             rare_spawn_channel = await message.guild.fetch_channel(
                 rare_spawn_channel_id
             )
+            debug_log(
+                f"Fetched rare spawn channel via API: found={bool(rare_spawn_channel)}, channel_id={rare_spawn_channel_id}"
+            )
         except Exception as e:
             pretty_log(
                 tag="error",
                 message=f"Failed to fetch rare spawn channel ({rare_spawn_channel_id}): {e}",
+            )
+            debug_log(
+                f"API fetch failed for rare spawn channel_id={rare_spawn_channel_id}: {e}"
             )
 
     if rare_spawn_channel:
@@ -231,6 +273,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
                 embed=rare_spawn_embed,
             )
             sent_to_rare_channel = True
+            debug_log(
+                f"Rare spawn embed sent via webhook to channel_id={getattr(rare_spawn_channel, 'id', 'N/A')}"
+            )
             pretty_log(
                 message=f"Rare spawn embed sent to #{rare_spawn_channel.name} via webhook",
                 tag="sent",
@@ -240,10 +285,14 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
                 tag="error",
                 message=f"Webhook send failed for rare spawn embed ({log_pokemon_name}) in #{rare_spawn_channel.name}: {e}",
             )
+            debug_log(f"Webhook send failed for rare spawn embed: {e}")
 
         if not sent_to_rare_channel:
             try:
                 await rare_spawn_channel.send(embed=rare_spawn_embed)
+                debug_log(
+                    f"Rare spawn embed sent via direct fallback to channel_id={getattr(rare_spawn_channel, 'id', 'N/A')}"
+                )
                 pretty_log(
                     message=f"Rare spawn embed sent to #{rare_spawn_channel.name} via direct channel send fallback",
                     tag="sent",
@@ -253,12 +302,19 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
                     tag="error",
                     message=f"Direct send fallback failed for rare spawn embed ({log_pokemon_name}) in #{rare_spawn_channel.name}: {e}",
                 )
+                debug_log(f"Direct fallback send failed for rare spawn embed: {e}")
     else:
+        debug_log(
+            f"Rare spawn channel unresolved for channel_id={rare_spawn_channel_id}; skipping embed send"
+        )
         pretty_log(
             tag="warn",
             message=f"Rare spawn channel not found in guild cache/API (ID: {rare_spawn_channel_id})",
         )
     if not has_market_value:
+        debug_log(
+            f"Skipping value embed for {log_pokemon_name or 'Unknown'} because has_market_value=False"
+        )
         return
 
     name_formatted = get_display_name(log_pokemon_name or "Unknown", dex=True)
@@ -269,6 +325,9 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
     field_name_str = f"Value as of {last_seen}"
     value_embed.add_field(
         name=field_name_str, value=current_listing_price_formatted or "N/A"
+    )
+    debug_log(
+        f"Sending value embed to original channel_id={getattr(message.channel, 'id', 'N/A')} with listing={current_listing_price}"
     )
     await send_webhook(
         bot=bot,
