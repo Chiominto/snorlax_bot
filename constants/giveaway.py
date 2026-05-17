@@ -8,7 +8,7 @@ REQUIRED_ROLES = [
     CELESTIAL_ROLES.staff,
     CELESTIAL_ROLES.khy_role
 ]
-ALLOWED_JOIN_ROLES = [CELESTIAL_ROLES.celestialnova_]
+ALLOWED_JOIN_ROLES = [CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.cosmic_catch_goal]
 BLACKLISTED_ROLES = [
     CELESTIAL_ROLES.out_of_orbit,
     CELESTIAL_ROLES.muted,

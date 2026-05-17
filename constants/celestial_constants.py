@@ -105,6 +105,7 @@ class CELESTIAL_CATEGORIES:
 #       CELESTIAL_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class CELESTIAL_ROLES:
+    cosmic_catch_goal = 1505715488469024970
     khy_role = 1490494779790983350
     tip_jar_titan = 1492514117775392828
     coin_saver = 1492514196829765752
