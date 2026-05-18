@@ -1,28 +1,23 @@
 import random
 import re
 
-
 import discord
 
 from constants.aesthetics import *
-from utils.db.ga_db import (
-    fetch_giveaway_row_by_message_id,
-    mark_giveaway_as_ended,
-)
-from utils.db.ga_entry_db import (
-    delete_ga_entry,
-    fetch_entries_by_giveaway,
-
-)
-
+from constants.giveaway import ALLOWED_JOIN_ROLES, BLACKLISTED_ROLES
+from utils.db.ga_db import fetch_giveaway_row_by_message_id, mark_giveaway_as_ended
+from utils.db.ga_entry_db import delete_ga_entry, fetch_entries_by_giveaway
 from utils.functions.role_checks import *
 from utils.functions.thumbnails import random_ga_thumbnail_url
 from utils.logs.pretty_log import pretty_log
 
 
-
 async def pick_winners(
-    bot: discord.Client, giveaway_id: int, entries, max_winners: int
+    bot: discord.Client,
+    guild: discord.Guild,
+    giveaway_id: int,
+    entries,
+    max_winners: int,
 ):
     weighted_entries: list[int] = []
     entry_map: dict[int, dict] = {}
@@ -43,6 +38,33 @@ async def pick_winners(
 
         if winner_id in chosen_ids:
             weighted_entries = [uid for uid in weighted_entries if uid != winner_id]
+            continue
+
+        member = guild.get_member(winner_id)
+        if member is None:
+            try:
+                member = await guild.fetch_member(winner_id)
+            except (discord.NotFound, discord.Forbidden, discord.HTTPException):
+                member = None
+
+        # Quietly remove ineligible/non-member users from the pool and DB entries.
+        if member is None:
+            await delete_ga_entry(bot, giveaway_id, winner_id)
+            weighted_entries = [uid for uid in weighted_entries if uid != winner_id]
+            continue
+
+        member_role_ids = {role.id for role in member.roles}
+        has_all_allowed_roles = all(
+            role_id in member_role_ids for role_id in ALLOWED_JOIN_ROLES
+        )
+        has_blacklisted_role = any(
+            role_id in member_role_ids for role_id in BLACKLISTED_ROLES
+        )
+
+        if not has_all_allowed_roles or has_blacklisted_role:
+            await delete_ga_entry(bot, giveaway_id, winner_id)
+            weighted_entries = [uid for uid in weighted_entries if uid != winner_id]
+            continue
 
         # Valid winner
         chosen_ids.add(winner_id)
@@ -257,7 +279,7 @@ async def end_giveaway_handler(
         return None
 
     # Pick winners
-    winners = await pick_winners(bot, giveaway_id, entries, max_winners)
+    winners = await pick_winners(bot, message.guild, giveaway_id, entries, max_winners)
     # 9 Finalize giveaway
     await finalize_giveaway(
         message=message,
@@ -396,7 +418,9 @@ async def reroll_giveaway_handler(
         return False, f"Giveaway message not found."
 
     # Pick winners
-    winners = await pick_winners(bot, giveaway_id, entries, reroll_count)
+    winners = await pick_winners(
+        bot, giveaway_message.guild, giveaway_id, entries, reroll_count
+    )
 
     # Finalize giveaway
     await send_rerolled_results(
