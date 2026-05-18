@@ -6,7 +6,6 @@ from discord.ui import Button, Modal, TextInput, View
 
 from constants.aesthetics import *
 from constants.giveaway import BLACKLISTED_ROLES, Extra_Entries
-
 from utils.db.ga_db import (
     fetch_giveaway_id_by_message_id,
     fetch_giveaway_row_by_message_id,
@@ -93,17 +92,16 @@ async def join_and_extra_entry(
     """Handles a user joining a giveaway and calculates their total entries."""
     guild = user.guild
 
-    clan_member_role = guild.get_role(CELESTIAL_ROLES.celestialnova_)
-    server_booster_role = guild.get_role(CELESTIAL_ROLES.server_booster)
-    if giveaway_type == "clan" and clan_member_role not in user.roles:
+    # Require ALL roles in ALLOWED_JOIN_ROLES
+    from constants.giveaway import ALLOWED_JOIN_ROLES
+
+    required_roles = [guild.get_role(role_id) for role_id in ALLOWED_JOIN_ROLES]
+    missing_roles = [role for role in required_roles if role and role not in user.roles]
+    if missing_roles:
+        required_names = ", ".join(role.name for role in required_roles if role)
         return (
             False,
-            f"You need the {clan_member_role.name} role to join this giveaway.",
-        )
-    if giveaway_type == "server booster" and server_booster_role not in user.roles:
-        return (
-            False,
-            f"You need the {server_booster_role.name} role to join this giveaway.",
+            f"You need all of the following roles to join this giveaway: {required_names}.",
         )
 
     # Check for blacklisted roles

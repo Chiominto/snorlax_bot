@@ -26,6 +26,7 @@ Extra_Entries = {
 }
 GIVEAWAY_ROLES = [
     CELESTIAL_ROLES.celestialnova_,
+    CELESTIAL_ROLES.cosmic_catch_goal,
     CELESTIAL_ROLES.out_of_orbit,
     CELESTIAL_ROLES.muted,
     CELESTIAL_ROLES.grounded,
