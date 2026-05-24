@@ -193,144 +193,153 @@ async def as_spawn_ping(bot: discord.Client, message: discord.Message):
 
     # Send embed to rare spawn channel
     has_market_value = False
-    market_value_info = await fetch_pokemon_cache_entry(
-        bot, log_pokemon_name or "Unknown"
-    )
-    debug_log(
-        f"Market cache lookup for {log_pokemon_name or 'Unknown'} returned type={type(market_value_info).__name__}"
-    )
-    current_listing_price = None
-    last_seen = None
-    if not market_value_info or not isinstance(market_value_info, dict):
-        pretty_log(
-            message=f"Market value not found for {log_pokemon_name or 'Unknown'}",
-            tag="info",
-        )
-        debug_log(f"No usable market value info for {log_pokemon_name or 'Unknown'}")
-    else:
-        current_listing_price = market_value_info.get("current_listing")
-        last_seen = market_value_info.get("listing_seen", "N/A")
-        if current_listing_price is not None and current_listing_price != 0:
-            has_market_value = True
+    try:
+        market_value_info = fetch_pokemon_cache_entry(log_pokemon_name or "Unknown")
         debug_log(
-            f"Market value parsed: current_listing={current_listing_price}, last_seen={last_seen}, has_market_value={has_market_value}"
+            f"Market cache lookup for {log_pokemon_name or 'Unknown'} returned type={type(market_value_info).__name__}"
+        )
+        current_listing_price = None
+        last_seen = None
+        if not market_value_info or not isinstance(market_value_info, dict):
+            pretty_log(
+                message=f"Market value not found for {log_pokemon_name or 'Unknown'}",
+                tag="info",
+            )
+            debug_log(f"No usable market value info for {log_pokemon_name or 'Unknown'}")
+        else:
+            current_listing_price = market_value_info.get("current_listing")
+            last_seen = market_value_info.get("listing_seen", "N/A")
+            if current_listing_price is not None and current_listing_price != 0:
+                has_market_value = True
+            debug_log(
+                f"Market value parsed: current_listing={current_listing_price}, last_seen={last_seen}, has_market_value={has_market_value}"
+            )
+
+        message_link = f"https://discord.com/channels/{getattr(message.guild, 'id', '0')}/{getattr(message.channel, 'id', '0')}/{getattr(message, 'id', '0')}"
+        desc = f"A wild {rarity_info.get('emoji', '❓')} {pokemon_name or 'Unknown Pokémon'} has spawned!"
+        footer_text = f"Spawned in {getattr(message.guild, 'name', 'Unknown Guild')}"
+        footer_icon = getattr(getattr(message.guild, "icon", None), "url", None) or ""
+        embed_color = getattr(embed.color, "value", 0xFFFFFF) if embed.color else 0xFFFFFF
+        rare_spawn_embed = discord.Embed(title=desc, url=message_link, color=embed_color)
+        rare_spawn_embed.set_image(url=gif_url)
+        rare_spawn_embed.set_footer(text=footer_text, icon_url=footer_icon)
+
+        last_seen = format_discord_timestamp(last_seen)
+        if has_market_value:
+            current_listing_price_formatted = format_price_w_coin(current_listing_price)
+            field_name_str = f"Value as of {last_seen}"
+            rare_spawn_embed.add_field(
+                name=field_name_str, value=current_listing_price_formatted or "N/A"
+            )
+
+        rare_spawn_channel_id = CELESTIAL_TEXT_CHANNELS.rare_spawns
+        rare_spawn_channel = getattr(message.guild, "get_channel", lambda x: None)(
+            rare_spawn_channel_id
+        ) or bot.get_channel(rare_spawn_channel_id)
+        debug_log(
+            f"Resolved rare spawn channel from cache: found={bool(rare_spawn_channel)}, channel_id={rare_spawn_channel_id}"
         )
 
-    message_link = f"https://discord.com/channels/{getattr(message.guild, 'id', '0')}/{getattr(message.channel, 'id', '0')}/{getattr(message, 'id', '0')}"
-    desc = f"A wild {rarity_info.get('emoji', '❓')} {pokemon_name or 'Unknown Pokémon'} has spawned!"
-    footer_text = f"Spawned in {getattr(message.guild, 'name', 'Unknown Guild')}"
-    footer_icon = getattr(getattr(message.guild, "icon", None), "url", None) or ""
-    embed_color = getattr(embed.color, "value", 0xFFFFFF) if embed.color else 0xFFFFFF
-    rare_spawn_embed = discord.Embed(title=desc, url=message_link, color=embed_color)
-    rare_spawn_embed.set_image(url=gif_url)
-    rare_spawn_embed.set_footer(text=footer_text, icon_url=footer_icon)
-
-    last_seen = format_discord_timestamp(last_seen)
-    if has_market_value:
-        current_listing_price_formatted = format_price_w_coin(current_listing_price)
-        field_name_str = f"Value as of {last_seen}"
-        rare_spawn_embed.add_field(
-            name=field_name_str, value=current_listing_price_formatted or "N/A"
-        )
-
-    rare_spawn_channel_id = CELESTIAL_TEXT_CHANNELS.rare_spawns
-    rare_spawn_channel = getattr(message.guild, "get_channel", lambda x: None)(
-        rare_spawn_channel_id
-    ) or bot.get_channel(rare_spawn_channel_id)
-    debug_log(
-        f"Resolved rare spawn channel from cache: found={bool(rare_spawn_channel)}, channel_id={rare_spawn_channel_id}"
-    )
-
-    # Fallback fetch for cache-miss cases where get_channel returns None.
-    if not rare_spawn_channel and message.guild:
-        try:
-            rare_spawn_channel = await message.guild.fetch_channel(
-                rare_spawn_channel_id
-            )
-            debug_log(
-                f"Fetched rare spawn channel via API: found={bool(rare_spawn_channel)}, channel_id={rare_spawn_channel_id}"
-            )
-        except Exception as e:
-            pretty_log(
-                tag="error",
-                message=f"Failed to fetch rare spawn channel ({rare_spawn_channel_id}): {e}",
-            )
-            debug_log(
-                f"API fetch failed for rare spawn channel_id={rare_spawn_channel_id}: {e}"
-            )
-
-    if rare_spawn_channel:
-        pretty_log(
-            tag="info",
-            message=f"Attempting rare spawn embed send to #{rare_spawn_channel.name} ({rare_spawn_channel.id})",
-        )
-
-        sent_to_rare_channel = False
-        try:
-            await send_webhook(
-                bot=bot,
-                channel=rare_spawn_channel,
-                embed=rare_spawn_embed,
-            )
-            sent_to_rare_channel = True
-            debug_log(
-                f"Rare spawn embed sent via webhook to channel_id={getattr(rare_spawn_channel, 'id', 'N/A')}"
-            )
-            pretty_log(
-                message=f"Rare spawn embed sent to #{rare_spawn_channel.name} via webhook",
-                tag="sent",
-            )
-        except Exception as e:
-            pretty_log(
-                tag="error",
-                message=f"Webhook send failed for rare spawn embed ({log_pokemon_name}) in #{rare_spawn_channel.name}: {e}",
-            )
-            debug_log(f"Webhook send failed for rare spawn embed: {e}")
-
-        if not sent_to_rare_channel:
+        # Fallback fetch for cache-miss cases where get_channel returns None.
+        if not rare_spawn_channel and message.guild:
             try:
-                await rare_spawn_channel.send(embed=rare_spawn_embed)
+                rare_spawn_channel = await message.guild.fetch_channel(
+                    rare_spawn_channel_id
+                )
                 debug_log(
-                    f"Rare spawn embed sent via direct fallback to channel_id={getattr(rare_spawn_channel, 'id', 'N/A')}"
+                    f"Fetched rare spawn channel via API: found={bool(rare_spawn_channel)}, channel_id={rare_spawn_channel_id}"
+                )
+            except Exception as e:
+                pretty_log(
+                    tag="error",
+                    message=f"Failed to fetch rare spawn channel ({rare_spawn_channel_id}): {e}",
+                )
+                debug_log(
+                    f"API fetch failed for rare spawn channel_id={rare_spawn_channel_id}: {e}"
+                )
+
+        if rare_spawn_channel:
+            pretty_log(
+                tag="info",
+                message=f"Attempting rare spawn embed send to #{rare_spawn_channel.name} ({rare_spawn_channel.id})",
+            )
+
+            sent_to_rare_channel = False
+            try:
+                await send_webhook(
+                    bot=bot,
+                    channel=rare_spawn_channel,
+                    embed=rare_spawn_embed,
+                )
+                sent_to_rare_channel = True
+                debug_log(
+                    f"Rare spawn embed sent via webhook to channel_id={getattr(rare_spawn_channel, 'id', 'N/A')}"
                 )
                 pretty_log(
-                    message=f"Rare spawn embed sent to #{rare_spawn_channel.name} via direct channel send fallback",
+                    message=f"Rare spawn embed sent to #{rare_spawn_channel.name} via webhook",
                     tag="sent",
                 )
             except Exception as e:
                 pretty_log(
                     tag="error",
-                    message=f"Direct send fallback failed for rare spawn embed ({log_pokemon_name}) in #{rare_spawn_channel.name}: {e}",
+                    message=f"Webhook send failed for rare spawn embed ({log_pokemon_name}) in #{rare_spawn_channel.name}: {e}",
                 )
-                debug_log(f"Direct fallback send failed for rare spawn embed: {e}")
-    else:
+                debug_log(f"Webhook send failed for rare spawn embed: {e}")
+
+            if not sent_to_rare_channel:
+                try:
+                    await rare_spawn_channel.send(embed=rare_spawn_embed)
+                    debug_log(
+                        f"Rare spawn embed sent via direct fallback to channel_id={getattr(rare_spawn_channel, 'id', 'N/A')}"
+                    )
+                    pretty_log(
+                        message=f"Rare spawn embed sent to #{rare_spawn_channel.name} via direct channel send fallback",
+                        tag="sent",
+                    )
+                except Exception as e:
+                    pretty_log(
+                        tag="error",
+                        message=f"Direct send fallback failed for rare spawn embed ({log_pokemon_name}) in #{rare_spawn_channel.name}: {e}",
+                    )
+                    debug_log(f"Direct fallback send failed for rare spawn embed: {e}")
+        else:
+            debug_log(
+                f"Rare spawn channel unresolved for channel_id={rare_spawn_channel_id}; skipping embed send"
+            )
+            pretty_log(
+                tag="warn",
+                message=f"Rare spawn channel not found in guild cache/API (ID: {rare_spawn_channel_id})",
+            )
+        if not has_market_value:
+            debug_log(
+                f"Skipping value embed for {log_pokemon_name or 'Unknown'} because has_market_value=False"
+            )
+            return
+
+        name_formatted = get_display_name(log_pokemon_name or "Unknown", dex=True)
+        value_embed = discord.Embed(
+            description=name_formatted,
+            color=embed_color,
+        )
+        field_name_str = f"Value as of {last_seen}"
+        value_embed.add_field(
+            name=field_name_str, value=current_listing_price_formatted or "N/A"
+        )
         debug_log(
-            f"Rare spawn channel unresolved for channel_id={rare_spawn_channel_id}; skipping embed send"
+            f"Sending value embed to original channel_id={getattr(message.channel, 'id', 'N/A')} with listing={current_listing_price}"
+        )
+        await send_webhook(
+            bot=bot,
+            channel=message.channel,
+            embed=value_embed,
         )
         pretty_log(
-            tag="warn",
-            message=f"Rare spawn channel not found in guild cache/API (ID: {rare_spawn_channel_id})",
+            message=f"Value embed sent to #{message.channel.name} for {log_pokemon_name or 'Unknown'} with listing price {current_listing_price_formatted}",
+            tag="sent",
         )
-    if not has_market_value:
-        debug_log(
-            f"Skipping value embed for {log_pokemon_name or 'Unknown'} because has_market_value=False"
+    except Exception as e:
+        pretty_log(
+            tag="error",
+            message=f"Error processing rare spawn embed for {log_pokemon_name or 'Unknown'}: {e}",
         )
-        return
-
-    name_formatted = get_display_name(log_pokemon_name or "Unknown", dex=True)
-    value_embed = discord.Embed(
-        description=name_formatted,
-        color=embed_color,
-    )
-    field_name_str = f"Value as of {last_seen}"
-    value_embed.add_field(
-        name=field_name_str, value=current_listing_price_formatted or "N/A"
-    )
-    debug_log(
-        f"Sending value embed to original channel_id={getattr(message.channel, 'id', 'N/A')} with listing={current_listing_price}"
-    )
-    await send_webhook(
-        bot=bot,
-        channel=message.channel,
-        embed=value_embed,
-    )
+        debug_log(f"Exception in rare spawn embed processing: {e}")
