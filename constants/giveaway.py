@@ -23,6 +23,7 @@ BLACKLISTED_DISPLAY = ", ".join(f"<@&{rid}>" for rid in BLACKLISTED_ROLES)
 Extra_Entries = {
     CELESTIAL_ROLES.top_catcher: 2,
     CELESTIAL_ROLES.server_booster: 1,
+    CELESTIAL_ROLES.golden_fry_disciple: 1,
 }
 GIVEAWAY_ROLES = [
     CELESTIAL_ROLES.celestialnova_,
@@ -33,6 +34,7 @@ GIVEAWAY_ROLES = [
     CELESTIAL_ROLES.coin_saver,
     CELESTIAL_ROLES.top_catcher,
     CELESTIAL_ROLES.server_booster,
+    CELESTIAL_ROLES.golden_fry_disciple,
 ]
 REG_GA_MIN_DURATION_SECONDS = 30 * 60
 

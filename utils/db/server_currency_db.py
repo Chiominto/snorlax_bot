@@ -17,15 +17,40 @@ from utils.logs.pretty_log import pretty_log
 );
 """
 
+
+async def get_all_people_with_most_fry_points(bot: discord.Client):
+    """Fetch all users tied for the highest fry points."""
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            results = await conn.fetch(
+                """
+                SELECT user_id, user_name, fry_points
+                FROM server_currency
+                WHERE fry_points = (
+                    SELECT MAX(fry_points)
+                    FROM server_currency
+                )
+                ORDER BY user_name ASC
+                """,
+            )
+            return results
+    except Exception as e:
+        pretty_log(message=f"Error fetching top fry points: {e}", tag="error")
+        return []
+
+
 async def fetch_all_server_currency(bot: discord.Client):
     """Fetch all server currency data from the database."""
     try:
         async with bot.pg_pool.acquire() as conn:
-            results = await conn.fetch("SELECT user_id, user_name, currency, fry_points FROM server_currency")
+            results = await conn.fetch(
+                "SELECT user_id, user_name, currency, fry_points FROM server_currency"
+            )
             return results
     except Exception as e:
         pretty_log(message=f"Error fetching all server currency: {e}", tag="error")
         return []
+
 
 async def upsert_user_currency(
     bot: discord.Client,
@@ -50,6 +75,7 @@ async def upsert_user_currency(
             )
         # Update the cache as well
         from utils.cache.server_currency_cache import upsert_user_currency_cache
+
         upsert_user_currency_cache(user_id, user_name, currency)
     except Exception as e:
         pretty_log(message=f"Error upserting user currency: {e}", tag="error")
@@ -78,6 +104,7 @@ async def upsert_user_fry_points(
             )
         # Update the cache as well
         from utils.cache.server_currency_cache import upsert_user_fry_points_cache
+
         upsert_user_fry_points_cache(user_id, user_name, fry_points)
     except Exception as e:
         pretty_log(message=f"Error upserting user fry points: {e}", tag="error")
@@ -107,6 +134,7 @@ async def delete_user_currency(bot: discord.Client, user_id: int):
             )
         # Remove from cache as well
         from utils.cache.server_currency_cache import delete_user_currency_cache
+
         delete_user_currency_cache(user_id)
     except Exception as e:
         pretty_log(message=f"Error deleting user currency: {e}", tag="error")
@@ -119,6 +147,7 @@ async def reset_all_currency_only(bot: discord.Client):
             await conn.execute("UPDATE server_currency SET currency = 0")
         # Clear the currency values in the cache as well
         from utils.cache.server_currency_cache import reset_all_currency_only_cache
+
         reset_all_currency_only_cache()
 
     except Exception as e:
@@ -132,6 +161,7 @@ async def reset_all_fry_points_only(bot: discord.Client):
             await conn.execute("UPDATE server_currency SET fry_points = 0")
         # Clear the fry points values in the cache as well
         from utils.cache.server_currency_cache import reset_all_fry_points_only_cache
+
         reset_all_fry_points_only_cache()
     except Exception as e:
         pretty_log(message=f"Error resetting all user fry points: {e}", tag="error")
@@ -145,7 +175,10 @@ async def reset_all_currency_and_fry_points(bot: discord.Client):
                 "UPDATE server_currency SET currency = 0, fry_points = 0"
             )
         # Clear the entire cache as well
-        from utils.cache.server_currency_cache import reset_all_currency_and_fry_points_cache
+        from utils.cache.server_currency_cache import (
+            reset_all_currency_and_fry_points_cache,
+        )
+
         reset_all_currency_and_fry_points_cache()
     except Exception as e:
         pretty_log(
@@ -176,6 +209,7 @@ async def reset_server_currency_table(bot: discord.Client):
     except Exception as e:
         pretty_log(message=f"Error resetting server currency table: {e}", tag="error")
 
+
 async def upsert_server_currency(
     bot: discord.Client,
     user_id: int,
@@ -201,8 +235,25 @@ async def upsert_server_currency(
                 fry_points,
             )
         # Update the cache as well
-        from utils.cache.server_currency_cache import upsert_user_currency_and_fry_points_cache
-        upsert_user_currency_and_fry_points_cache(user_id, user_name, currency, fry_points)
+        from utils.cache.server_currency_cache import (
+            upsert_user_currency_and_fry_points_cache,
+        )
+
+        upsert_user_currency_and_fry_points_cache(
+            user_id, user_name, currency, fry_points
+        )
 
     except Exception as e:
         pretty_log(message=f"Error upserting server currency: {e}", tag="error")
+
+async def fetch_all_fry_points(bot: discord.Client):
+    """Fetch all users' fry points from the database."""
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            results = await conn.fetch(
+                "SELECT user_id, user_name, fry_points FROM server_currency"
+            )
+            return results
+    except Exception as e:
+        pretty_log(message=f"Error fetching all user fry points: {e}", tag="error")
+        return []

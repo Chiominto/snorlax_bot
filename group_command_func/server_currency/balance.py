@@ -3,26 +3,23 @@ from zoneinfo import ZoneInfo
 
 import discord
 from discord.ext import commands
+
 from constants.celestial_constants import CELESTIAL_SERVER_ID, DEFAULT_EMBED_COLOR
-
-from constants.server_currency import (
-    CURRENCY_EMOJI,
-    FRY_POINT_EMOJI,
-
-)
+from constants.server_currency import CURRENCY_EMOJI, FRY_POINT_EMOJI
 from utils.cache.cache_list import server_currency_cache
 from utils.db.server_currency_db import (
     reset_server_currency_table,
+    upsert_server_currency,
     upsert_user_currency,
     upsert_user_fry_points,
-    upsert_server_currency,
 )
 from utils.functions.pretty_defer import pretty_defer
-
+from utils.functions.role_checks import is_clan_member, is_staff_member
 from utils.logs.pretty_log import pretty_log
 from utils.logs.server_log import send_log_to_server_log
-from utils.functions.role_checks import is_clan_member, is_staff_member
+
 SHOP_COLOR = DEFAULT_EMBED_COLOR
+
 
 # Add Balance
 async def add_balance_func(
@@ -64,7 +61,6 @@ async def add_balance_func(
             user_name=member.name,
             currency=0,
             fry_points=0,
-
         )
     else:
 
@@ -178,7 +174,6 @@ async def remove_balance_func(
             current_balance_info.get("fry_points", 0) if current_balance_info else 0
         )
 
-
     updated_starry_meal = False
     updated_fry_points = False
     if starry_meal:
@@ -187,10 +182,9 @@ async def remove_balance_func(
             bot=bot,
             user_id=member.id,
             user_name=member.name,
-            balance=new_balance,
+            currency=new_balance,
         )
         updated_starry_meal = True
-
 
     if fry_points:
         new_fry_points = max(0, current_fry_points - fry_points)

@@ -11,6 +11,7 @@ CELESTIAL_SERVER_ID = 1490116594884411402
 #       CELESTIAL_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
 class CELESTIAL_TEXT_CHANNELS:
+    clan_annoucement = 1500473482872623195
 
     # 🌊💙🤍───────────── Admin ─────────────💙🤍🌊
     off_topic = 1492732522516189225
@@ -105,6 +106,7 @@ class CELESTIAL_CATEGORIES:
 #       CELESTIAL_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class CELESTIAL_ROLES:
+    golden_fry_disciple = 1500474832544993431
     cosmic_catch_goal = 1505715488469024970
     khy_role = 1490494779790983350
     tip_jar_titan = 1492514117775392828
