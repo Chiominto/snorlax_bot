@@ -2,11 +2,11 @@ import zoneinfo
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from .daily_pray_reset import daily_pray_reset
-
-
 from utils.background_tasks.scheduled_task.sched_helper import SchedulerManager
 from utils.logs.pretty_log import pretty_log
+
+from .daily_pray_reset import daily_pray_reset
+from .fry_point_reset import fry_point_reset
 
 NYC = zoneinfo.ZoneInfo("America/New_York")  # auto-handles EST/EDT
 
@@ -35,7 +35,6 @@ async def setup_scheduler(bot):
     # Start the scheduler
     scheduler_manager.start()
 
-
     # ✨─────────────────────────────────────────────────────────
     # 🤍 DAILY PRAY RESET — Every Midnight (NYC)
     # ✨─────────────────────────────────────────────────────────
@@ -58,5 +57,31 @@ async def setup_scheduler(bot):
         pretty_log(
             "error",
             f"Failed to schedule 'daily_pray_reset': {e}",
+            label="SCHEDULER",
+        )
+
+    # ✨─────────────────────────────────────────────────────────
+    # 🍟 FRY POINT RESET — Last Day Of Month, 11:55 PM (EST/EDT)
+    # ✨─────────────────────────────────────────────────────────
+    try:
+        fry_point_reset_job = scheduler_manager.add_cron_job(
+            func=fry_point_reset,
+            name="fry_point_reset",
+            hour=23,
+            minute=55,
+            day_of_month="last",
+            timezone=NYC,  # Schedule based on NYC time (handles EST/EDT)
+            args=[bot],
+        )
+        next_run = fry_point_reset_job.next_run_time
+        pretty_log(
+            "ready",
+            f"✅ Scheduled 'fry_point_reset' to run at {format_next_run_manila(next_run)}",
+            label="SCHEDULER",
+        )
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Failed to schedule 'fry_point_reset': {e}",
             label="SCHEDULER",
         )

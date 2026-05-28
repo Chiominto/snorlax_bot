@@ -1,0 +1,27 @@
+{
+  "python.analysis.exclude": [
+    "**/node_modules",
+    "**/.*",
+    "**/.env",
+    "**/.venv",
+    "**/env",
+    "**/venv",
+    "**/__pycache__",
+    "**/build",
+    "**/dist"
+  ],
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.diagnosticMode": "workspace",
+  "python.analysis.useLibraryCodeForTypes": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": false,
+    "strings": true
+  },
+  "editor.suggestOnTriggerCharacters": true,
+  "editor.suggest.localityBonus": true,
+  "editor.suggestSelection": "recentlyUsedByPrefix",
+  "editor.inlineSuggest.enabled": true,
+  "github.copilot.editor.enableAutoCompletions": true,
+  "editor.tabCompletion": "on"
+}
