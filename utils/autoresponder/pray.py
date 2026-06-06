@@ -61,6 +61,7 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
 
     # Check if user has celestial role or khy for testing
     clan_role = clan_guild.get_role(CELESTIAL_ROLES.celestialnova_)
+    golden_fry_disciple = clan_guild.get_role(CELESTIAL_ROLES.golden_fry_disciple)
     if clan_role not in user.roles and user.id != KHY_USER_ID:
         return  # User doesn't have the role, ignore
 
@@ -75,8 +76,11 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
         content = f"Your next prayer will be ready <t:{cooldown_ends_on}:R>."
         await message.reply(content)
         return
+    chance = 0.5  # Default 50% blessing chance
+    if golden_fry_disciple in user.roles:
+        chance = 0.4  # Golden Fry Disciple has 40% blessing chance
     # No cooldown, proceed with blessing or curse
-    if random.random() < 0.5:
+    if random.random() < chance:
         # Blessing
 
         fry_points = await fetch_fry_points(bot, user.id)
