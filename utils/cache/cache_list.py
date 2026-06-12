@@ -114,6 +114,23 @@ server_currency_cache: dict[int, dict] = {}
 #   "fry_points": int,
 # }
 
+
+# 🔮────────────────────────────────────────────
+#        ⚡ Utility Cache
+# 👻────────────────────────────────────────────
+utility_cache: dict[int, dict[str, str | dict[str, str]]] = {}
+# Structure:
+# {
+#   user_id: {
+#     "user_name": str,
+#     "utilities": {
+#       "weakness_chart": str,
+#       "fossil_alert": str,
+#       ...
+#     }
+#   },
+
+
 processing_end_giveaway_message_ids = set()
 
 

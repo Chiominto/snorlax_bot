@@ -7,6 +7,7 @@ from .pokemon_cache import load_pokemon_cache
 from .webhook_url_cache import load_webhook_url_cache
 from .server_currency_cache import load_server_currency_cache
 from .market_alert_cache import load_market_alert_cache
+from .utilities_cache import load_utility_cache
 
 async def load_all_cache(bot: discord.Client):
     """
@@ -25,6 +26,9 @@ async def load_all_cache(bot: discord.Client):
 
         # Load Market Alert Cache
         await load_market_alert_cache(bot)
+
+        # Load Utility Cache
+        await load_utility_cache(bot)
 
 
     except Exception as e:

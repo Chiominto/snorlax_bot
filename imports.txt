@@ -24,3 +24,5 @@ from constants.celestial_constants import (
     CELESTIAL_TEXT_CHANNELS,
     KHY_USER_ID
 )
+
+from utils.cache.utilities_cache import phone_copy_description

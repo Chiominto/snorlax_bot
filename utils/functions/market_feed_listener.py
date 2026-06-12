@@ -22,6 +22,7 @@ from utils.db.pokemons_db import update_market_value
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
+from utils.cache.utilities_cache import phone_copy_description
 
 PokeCoin = Emojis.pokecoin
 ALLOWED_WEBHOOKS = {
@@ -108,9 +109,16 @@ async def handle_market_alert(
         name=embed.author.name if embed.author else "",
         icon_url=embed.author.icon_url if embed.author else None,
     )
+    single_buy_command = f";m b {original_id}"
+    single_buy_command = phone_copy_description(
+        text=single_buy_command, member_id=user_id
+    )
+    buy_all_command = f";m b {original_id} all"
+    buy_all_command = phone_copy_description(text=buy_all_command, member_id=user_id)
 
     # Buy command
-    alert_embed.add_field(name="Buy Command", value=f";m b {original_id}", inline=False)
+    alert_embed.add_field(name="Buy Command", value=single_buy_command, inline=False)
+    alert_embed.add_field(name="Buy All Command", value=buy_all_command, inline=False)
     alert_embed.add_field(name="ID", value=original_id, inline=True)
     alert_embed.add_field(
         name="Listed Price",
