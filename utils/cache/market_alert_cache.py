@@ -17,7 +17,20 @@ MARKET_ALERT_ROLE_MAP = {
 
 MARKET_ALERT_ROLES = set(MARKET_ALERT_ROLE_MAP.keys())
 
-
+def update_channel_ids_for_user_in_cache(user_id: int, new_channel_id: int):
+    for alert in market_alert_cache:
+        if alert["user_id"] == user_id:
+            old_channel_id = alert["channel_id"]
+            alert["channel_id"] = new_channel_id
+            # Update the index key
+            old_key = (alert["pokemon"], old_channel_id, user_id)
+            new_key = (alert["pokemon"], new_channel_id, user_id)
+            _market_alert_index[new_key] = _market_alert_index.pop(old_key)
+    pretty_log(
+        message=f"✅ Updated channel IDs for all market alerts of User ID: {user_id} to {new_channel_id} in cache.",
+        tag="cache",
+    )
+    
 def check_if_user_has_market_alert_roles(user: discord.Member) -> bool:
     has_role = any(role.id in MARKET_ALERT_ROLES for role in user.roles)
     if not has_role:

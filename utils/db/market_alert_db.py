@@ -309,3 +309,33 @@ async def remove_recent_market_alerts(
             include_trace=True,
         )
         return []
+
+async def update_channel_ids_for_user(bot: discord.Client, user_id: int, new_channel_id: int):
+    """Updates the channel_id for all market alerts of a specific user."""
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE market_alerts
+                SET channel_id = $2
+                WHERE user_id = $1
+                """,
+                user_id,
+                new_channel_id,
+            )
+            pretty_log(
+                "db",
+                f"✅ Updated channel_id to {new_channel_id} for all market alerts of user_id={user_id}",
+            )
+
+            # Update cache
+            from utils.cache.market_alert_cache import update_channel_ids_for_user_in_cache
+
+            update_channel_ids_for_user_in_cache(user_id, new_channel_id)
+
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Failed to update channel IDs for user_id={user_id}: {e}",
+            include_trace=True,
+        )

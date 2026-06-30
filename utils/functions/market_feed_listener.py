@@ -18,11 +18,12 @@ from utils.cache.cache_list import (
     processed_market_feed_message_ids,
     processed_snipe_ids,
 )
+from utils.cache.utilities_cache import phone_copy_description
+from utils.db.market_alert_db import update_channel_ids_for_user
 from utils.db.pokemons_db import update_market_value
 from utils.functions.webhook_func import send_webhook
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
-from utils.cache.utilities_cache import phone_copy_description
 
 PokeCoin = Emojis.pokecoin
 ALLOWED_WEBHOOKS = {
@@ -92,13 +93,29 @@ async def handle_market_alert(
     embed: discord.Embed,
 ):
 
+    public_channel = guild.get_channel(CELESTIAL_TEXT_CHANNELS.pikachus_playground)
+
     alert_channel = guild.get_channel(channel_id)
     if not alert_channel:
         pretty_log(
-            "error",
+            "info",
             f"Alert channel with ID {channel_id} not found in guild {guild.name}",
         )
-        return
+        if public_channel:
+            # Update the user's alert channel to the public channel in the database
+            await update_channel_ids_for_user(bot, user_id, public_channel.id)
+            alert_channel = public_channel
+            pretty_log(
+                "info",
+                f"Updated alert channel for user {user_name} to public channel {public_channel.name}",
+            )
+
+        else:
+            pretty_log(
+                "error",
+                f"Public channel not found in guild {guild.name}. Cannot send alert for user {user_name}.",
+            )
+            return
 
     # Build embed
     color = embed.color or 0x00FF00
@@ -126,9 +143,13 @@ async def handle_market_alert(
         inline=True,
     )
     alert_embed.add_field(name="Amount", value=amount, inline=True)
+    if isinstance(lowest_market, int):
+        lowest_market_display = f"{Emojis.pokecoin} {lowest_market:,}"
+    else:
+        lowest_market_display = f"{Emojis.pokecoin} {lowest_market}"
     alert_embed.add_field(
         name="Lowest Market",
-        value=f"{Emojis.pokecoin} {lowest_market:,}",
+        value=lowest_market_display,
         inline=True,
     )
     alert_embed.add_field(
@@ -138,7 +159,7 @@ async def handle_market_alert(
     )
     alert_embed.set_footer(
         text="Kindly check market listing before purchasing.",
-        icon_url=guild.icon.url if guild else None,
+        icon_url=guild.icon.url if guild and guild.icon else None,
     )
     if ping:
         content = f"<@{user_id}> {poke_name.title()} listed for {Emojis.pokecoin} {listed_price:,} each!"
