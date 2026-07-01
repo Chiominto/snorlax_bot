@@ -46,7 +46,9 @@ SNIPE_MAP = {
 }
 
 
-# enable_debug(f"{__name__}.process_market_feed_message")
+enable_debug(f"{__name__}.process_market_feed_message")
+enable_debug(f"{__name__}.handle_market_alert")
+
 # enable_debug(f"{__name__}.snipe_handler")
 def determine_rarity_from_name_and_author_icon(
     poke_name: str, author_icon_url: str, embed_color: int
@@ -93,15 +95,22 @@ async def handle_market_alert(
     embed: discord.Embed,
 ):
 
+    debug_log(
+        f"handle_market_alert called for user={user_name} ({user_id}), pokemon={poke_name}, listed_price={listed_price}, channel_id={channel_id}, ping={ping}"
+    )
     public_channel = guild.get_channel(CELESTIAL_TEXT_CHANNELS.pikachus_playground)
 
     alert_channel = guild.get_channel(channel_id)
+    debug_log(f"alert_channel resolved to {alert_channel}")
     if not alert_channel:
         pretty_log(
             "info",
             f"Alert channel with ID {channel_id} not found in guild {guild.name}",
         )
         if public_channel:
+            debug_log(
+                f"Falling back to public channel {public_channel.id} for user {user_name}"
+            )
             # Update the user's alert channel to the public channel in the database
             await update_channel_ids_for_user(bot, user_id, public_channel.id)
             alert_channel = public_channel
@@ -111,6 +120,9 @@ async def handle_market_alert(
             )
 
         else:
+            debug_log(
+                f"No fallback public channel found in guild {guild.name}, aborting alert for {user_name}"
+            )
             pretty_log(
                 "error",
                 f"Public channel not found in guild {guild.name}. Cannot send alert for user {user_name}.",
@@ -167,6 +179,9 @@ async def handle_market_alert(
         content = (
             f"{poke_name.title()} listed for {Emojis.pokecoin} {listed_price:,} each!"
         )
+    debug_log(
+        f"Sending market alert to channel {alert_channel.id} ({alert_channel.name}) for {user_name}, content={content!r}"
+    )
     # await alert_channel.send(content=content, embed=alert_embed)
     await send_webhook(
         bot=bot,
@@ -174,6 +189,7 @@ async def handle_market_alert(
         content=content,
         embed=alert_embed,
     )
+    debug_log(f"Market alert webhook sent successfully for {user_name} on {poke_name}")
 
     pretty_log(
         "sent",
@@ -440,21 +456,31 @@ async def process_market_feed_message(
                 debug_log(
                     f"Triggering market alert for {user_name} on {poke_name} at price {listed_price}"
                 )
-                await handle_market_alert(
-                    bot=bot,
-                    user_name=user_name,
-                    user_id=user_id,
-                    guild=message.guild,
-                    original_id=original_id,
-                    poke_name=poke_name,
-                    listed_price=listed_price,
-                    channel_id=channel_id,
-                    ping=ping,
-                    amount=amount,
-                    lowest_market=lowest_market,
-                    listing_seen=listing_seen,
-                    embed=embed,
-                )
+                try:
+                    await handle_market_alert(
+                        bot=bot,
+                        user_name=user_name,
+                        user_id=user_id,
+                        guild=message.guild,
+                        original_id=original_id,
+                        poke_name=poke_name,
+                        listed_price=listed_price,
+                        channel_id=channel_id,
+                        ping=ping,
+                        amount=amount,
+                        lowest_market=lowest_market,
+                        listing_seen=listing_seen,
+                        embed=embed,
+                    )
+                except Exception as e:
+                    debug_log(
+                        f"Error while handling market alert for {user_name} on {poke_name}: {e}"
+                    )
+                    pretty_log(
+                        "error",
+                        f"Failed to send market alert for {user_name} on {poke_name}: {e}",
+                    )
+
         # 💎────────────────────────────────────────────
         #           🏪 Update Market Value Cache & DB
         # 💎────────────────────────────────────────────

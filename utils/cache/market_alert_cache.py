@@ -17,6 +17,7 @@ MARKET_ALERT_ROLE_MAP = {
 
 MARKET_ALERT_ROLES = set(MARKET_ALERT_ROLE_MAP.keys())
 
+
 def update_channel_ids_for_user_in_cache(user_id: int, new_channel_id: int):
     for alert in market_alert_cache:
         if alert["user_id"] == user_id:
@@ -30,7 +31,8 @@ def update_channel_ids_for_user_in_cache(user_id: int, new_channel_id: int):
         message=f"✅ Updated channel IDs for all market alerts of User ID: {user_id} to {new_channel_id} in cache.",
         tag="cache",
     )
-    
+
+
 def check_if_user_has_market_alert_roles(user: discord.Member) -> bool:
     has_role = any(role.id in MARKET_ALERT_ROLES for role in user.roles)
     if not has_role:
@@ -175,22 +177,51 @@ def insert_alert_into_cache(
     ping: bool,
 ):
     dex = str(dex)
-    alert_entry = {
-        "user_id": user_id,
-        "user_name": user_name,
-        "pokemon": pokemon,
-        "dex": dex,
-        "max_price": max_price,
-        "channel_id": channel_id,
-        "ping": ping,
-    }
-    market_alert_cache.append(alert_entry)
-    key = (pokemon, channel_id, user_id)
-    _market_alert_index[key] = alert_entry
-    pretty_log(
-        message=f"✅ Inserted market alert for {user_name} {pokemon} (User ID: {user_id}) into cache.",
-        tag="cache",
-    )
+
+    # Check if an entry already exists for this (pokemon, user_id) — handles DB upsert case
+    old_key = None
+    for key in _market_alert_index:
+        if key[0] == pokemon and key[2] == user_id:
+            old_key = key
+            break
+
+    if old_key:
+        # Update existing entry in-place to avoid duplicates in market_alert_cache
+        alert_entry = _market_alert_index[old_key]
+        alert_entry["user_name"] = user_name
+        alert_entry["dex"] = dex
+        alert_entry["max_price"] = max_price
+        alert_entry["ping"] = ping
+        alert_entry["channel_id"] = channel_id
+
+        # Re-key the index if the channel changed
+        if old_key[1] != channel_id:
+            del _market_alert_index[old_key]
+            new_key = (pokemon, channel_id, user_id)
+            _market_alert_index[new_key] = alert_entry
+
+        pretty_log(
+            message=f"✅ Updated (upserted) market alert for {user_name} {pokemon} (User ID: {user_id}) in cache.",
+            tag="cache",
+        )
+    else:
+        # Genuinely new alert — append and add to index
+        alert_entry = {
+            "user_id": user_id,
+            "user_name": user_name,
+            "pokemon": pokemon,
+            "dex": dex,
+            "max_price": max_price,
+            "channel_id": channel_id,
+            "ping": ping,
+        }
+        market_alert_cache.append(alert_entry)
+        key = (pokemon, channel_id, user_id)
+        _market_alert_index[key] = alert_entry
+        pretty_log(
+            message=f"✅ Inserted market alert for {user_name} {pokemon} (User ID: {user_id}) into cache.",
+            tag="cache",
+        )
 
 
 def remove_alert_from_user_in_cache(
