@@ -11,7 +11,7 @@ from utils.db.server_currency_db import (
     get_all_people_with_most_fry_points,
     reset_all_fry_points_only,
 )
-from utils.db.temp_roles_db import fetch_temp_role_by_role_id
+from utils.db.temp_roles_db import fetch_temp_role_by_role_id, upsert_temp_role
 from utils.logs.pretty_log import pretty_log
 
 
@@ -97,7 +97,7 @@ async def fry_point_reset(bot: discord.Client):
         bot, CELESTIAL_ROLES.golden_fry_disciple
     )
     if previous_top_holder_id:
-        previous_top_holder = guild.get_member(previous_top_holder_id)
+        previous_top_holder = guild.get_member(previous_top_holder_id["user_id"])
         if previous_top_holder:
             # Remove the golden fry disciple role from the previous top holder
             if golden_fry_disciple_role in previous_top_holder.roles:
@@ -166,6 +166,13 @@ The sacred fryer oil has settled… the golden potatoes have been counted… and
                     "info",
                     f"Assigned Golden Fry Disciple role to new top holder {member.display_name} ({member.id})",
                     label="FRY POINT RESET",
+                )
+                await upsert_temp_role(
+                    bot,
+                    member.id,
+                    member.name,
+                    CELESTIAL_ROLES.golden_fry_disciple,
+                    golden_fry_disciple_role.name,
                 )
             except discord.HTTPException as e:
                 pretty_log(
