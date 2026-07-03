@@ -134,7 +134,15 @@ async def send_webhook(
             label="🌐 WEBHOOK SEND",
         )
         await remove_webhook_url(bot, channel)
-    except discord.HTTPException:
+    except discord.HTTPException as e:
+        if e.status == 429:
+            pretty_log(
+                tag="error",
+                message=f"⚠️ Webhook rate limited (429) for channel '{channel.name}' (ID: {channel.id}), falling back to direct send: {e}",
+                label="🌐 WEBHOOK SEND",
+            )
+            await channel.send(content=content, embed=embed)
+            return
         raise
 
     refreshed_webhook_url = await get_webhook_url(bot, channel)
