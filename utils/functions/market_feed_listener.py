@@ -19,6 +19,7 @@ from utils.cache.cache_list import (
     processed_snipe_ids,
 )
 from utils.cache.utilities_cache import phone_copy_description
+from utils.db.celestial_members_db import fetch_member_channel_id
 from utils.db.market_alert_db import update_channel_ids_for_user
 from utils.db.pokemons_db import update_market_value
 from utils.functions.webhook_func import send_webhook
@@ -48,6 +49,7 @@ SNIPE_MAP = {
 
 enable_debug(f"{__name__}.process_market_feed_message")
 enable_debug(f"{__name__}.handle_market_alert")
+
 
 # enable_debug(f"{__name__}.snipe_handler")
 def determine_rarity_from_name_and_author_icon(
@@ -128,6 +130,23 @@ async def handle_market_alert(
                 f"Public channel not found in guild {guild.name}. Cannot send alert for user {user_name}.",
             )
             return
+    if alert_channel.id == CELESTIAL_TEXT_CHANNELS.pikachus_playground:
+        # Check if the user has a personal channel
+        personal_channel_id = await fetch_member_channel_id(bot, user_id)
+        if personal_channel_id:
+            personal_channel = guild.get_channel(personal_channel_id)
+            if personal_channel:
+                alert_channel = personal_channel
+                await update_channel_ids_for_user(bot, user_id, personal_channel.id)
+                pretty_log(
+                    "info",
+                    f"User {user_name} has a personal channel. Sending alert to {personal_channel.name} instead of public channel.",
+                )
+            else:
+                pretty_log(
+                    "info",
+                    f"User {user_name}'s personal channel (ID: {personal_channel_id}) could not be found in guild. Sending alert to public channel.",
+                )
 
     # Build embed
     color = embed.color or 0x00FF00
