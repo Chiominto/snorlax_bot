@@ -7,7 +7,11 @@ from discord.ext import commands
 from constants.celestial_constants import CELESTIAL_SERVER_ID, DEFAULT_EMBED_COLOR
 from constants.server_currency import CURRENCY_EMOJI, FRY_POINT_EMOJI
 from utils.cache.cache_list import server_currency_cache
+from utils.cache.server_currency_cache import load_server_currency_cache
 from utils.db.server_currency_db import (
+    reset_all_currency_and_fry_points,
+    reset_all_currency_only,
+    reset_all_fry_points_only,
     reset_server_currency_table,
     upsert_server_currency,
     upsert_user_currency,
@@ -245,26 +249,40 @@ async def remove_balance_func(
 async def reset_all_balances_func(
     bot: commands.Bot,
     interaction: discord.Interaction,
+    scope: str,
 ):
     """
     Reset all members' currency balances to zero.
     """
+    scope = scope.lower()
     # Defer the interaction to allow more time for processing
     loader = await pretty_defer(
         interaction=interaction,
-        content="Resetting all member balances...",
+        content=f"Resetting members' {scope} balances...",
         ephemeral=False,
     )
 
     # Reset all balances and raffle tickets in the database
-    await reset_server_currency_table(bot=bot)
+    if scope == "starry meals":
+        await reset_all_currency_only(bot=bot)
+    elif scope == "fry points":
+        await reset_all_fry_points_only(bot=bot)
+    elif scope == "all":
+        await reset_all_currency_and_fry_points(bot=bot)
+    else:
+        return await loader.error(
+            content=f"Unknown scope: `{scope}`. Use `starry meals`, `fry points`, or `all`."
+        )
+
+    # Sync cache to reflect the reset
+    await load_server_currency_cache(bot)
 
     # Success embed
     embed = discord.Embed(
         title="All Balances Reset",
         color=SHOP_COLOR,
         timestamp=datetime.now(),
-        description="Successfully reset all members' starry meals and fry points to zero.",
+        description=f"Successfully reset all members' {scope} to zero.",
     )
     embed.set_author(
         name=interaction.user.display_name,
@@ -273,7 +291,7 @@ async def reset_all_balances_func(
     await loader.success(embed=embed, content="")
     pretty_log(
         "info",
-        "Reset all members' starry meals and fry points to zero.",
+        f"Reset all members' {scope} to zero.",
         label="Server Currency",
     )
     # Send in action log channel

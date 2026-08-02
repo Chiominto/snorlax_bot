@@ -121,6 +121,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
     async def balance_reset(
         self,
         interaction: discord.Interaction,
+        scope: Literal["Starry Meals", "Fry Points", "All"],
     ):
         slash_cmd_name = "balance reset"
         await run_command_safe(
@@ -128,6 +129,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
             slash_cmd_name=slash_cmd_name,
             bot=self.bot,
             interaction=interaction,
+            scope=scope,
         )
 
     balance_reset.extras = {"category": "Staff"}
