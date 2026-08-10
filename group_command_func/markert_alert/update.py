@@ -1,18 +1,19 @@
 import discord
 from discord.ext import commands
-from utils.functions.parsers import parse_compact_number
 
 from constants.aesthetics import Emojis
 from utils.cache.cache_list import market_alert_cache
-from utils.db.market_alert_db import (
-    update_market_alert,
-)
+from utils.db.market_alert_db import update_market_alert
 from utils.functions.design_embed import design_embed
+from utils.functions.parsers import parse_compact_number
+from utils.functions.pokemon_func import (
+    get_dex_number_by_name,
+    get_display_name,
+    is_mon_in_game,
+)
 from utils.functions.pretty_defer import pretty_defer, pretty_error
 from utils.logs.pretty_log import pretty_log
 from utils.logs.server_log import send_log_to_server_log
-
-from utils.functions.pokemon_func import get_display_name, get_dex_number_by_name, is_mon_in_game
 
 
 async def update_market_alert_func(
@@ -85,7 +86,7 @@ async def update_market_alert_func(
     old_ping = old_market_alert_info.get("ping", False)
     old_ping_str = "Yes" if old_ping else "No"
     new_ping_str = "Yes" if new_ping and new_ping.lower() == "yes" else "No"
-    new_ping = True if new_ping and new_ping.lower() == "yes" else False
+    new_ping = (new_ping.lower() == "yes") if new_ping is not None else None
     # Update in database
     try:
         await update_market_alert(
@@ -107,7 +108,7 @@ async def update_market_alert_func(
             description=f"**Pokemon:** {display_name}\n",
         )
         if new_max_price:
-            embed.description += f"**Max Price:** {Emojis.pokecoin} {old_max_price} → {Emojis.pokecoin} {parsed_price}\n"
+            embed.description += f"**Max Price:** {Emojis.pokecoin} {old_max_price:,} → {Emojis.pokecoin} {parsed_price:,}\n"
         if new_channel:
             old_channel_mention = f"<#{old_channel_id}>"
             new_channel_mention = f"<#{new_channel.id}>"
@@ -127,12 +128,11 @@ async def update_market_alert_func(
         log_embed = discord.Embed(
             title="📢 Market Alert Updated",
             description=(
-                f"**User:** {user.mention}\n"
-                f"**Pokemon:** {display_name}\n"
+                f"**User:** {user.mention}\n" f"**Pokemon:** {display_name}\n"
             ),
         )
         if new_max_price:
-            log_embed.description += f"**Max Price:** {Emojis.pokecoin} {old_max_price} → {Emojis.pokecoin} {parsed_price}\n"
+            log_embed.description += f"**Max Price:** {Emojis.pokecoin} {old_max_price:,} → {Emojis.pokecoin} {parsed_price:,}\n"
         if new_channel:
             old_channel_mention = f"<#{old_channel_id}>"
             new_channel_mention = f"<#{new_channel.id}>"
