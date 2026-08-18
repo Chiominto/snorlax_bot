@@ -42,9 +42,9 @@ async def snipe_ga_func(
 ):
     """Starts a quick snipe giveaway."""
 
-    if interaction.channel.id != CELESTIAL_TEXT_CHANNELS.giveaways:
+    if interaction.channel.id != CELESTIAL_TEXT_CHANNELS.giveaway_snipe:
         await interaction.response.send_message(
-            f"This command can only be used in <#{CELESTIAL_TEXT_CHANNELS.giveaways}>.",
+            f"This command can only be used in <#{CELESTIAL_TEXT_CHANNELS.giveaway_snipe}>.",
             ephemeral=True,
         )
         return
