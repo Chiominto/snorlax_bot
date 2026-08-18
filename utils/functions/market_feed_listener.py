@@ -47,8 +47,8 @@ SNIPE_MAP = {
 }
 
 
-enable_debug(f"{__name__}.process_market_feed_message")
-enable_debug(f"{__name__}.handle_market_alert")
+#enable_debug(f"{__name__}.process_market_feed_message")
+#enable_debug(f"{__name__}.handle_market_alert")
 
 
 # enable_debug(f"{__name__}.snipe_handler")

@@ -74,6 +74,7 @@ class CELESTIAL_TEXT_CHANNELS:
     general = 1490495511634116778
     autospawn = 1491259323526021150
     founders_chat = 1490116595664683180
+    giveaway_snipe = 1539199799926988870
 
 
 # 💦☁────────────────────────────────────────────💦☁
@@ -106,6 +107,8 @@ class CELESTIAL_CATEGORIES:
 #       CELESTIAL_ROLES
 # 💦☁────────────────────────────────────────────💦☁
 class CELESTIAL_ROLES:
+    snipe_giveaways = 1539220238657134654
+    giveaway_host = 1539197060061073521
     golden_fry_disciple = 1500474832544993431
     cosmic_catch_goal = 1505715488469024970
     khy_role = 1490494779790983350

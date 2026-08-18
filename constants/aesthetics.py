@@ -19,6 +19,8 @@ class Emojis:
     starry_meal = "<:StarryMeal:1502134915968536606>"
 
 class Thumbnails:
+    CELEBRATE = "https://media.discordapp.net/attachments/1394913073520967680/1460459976802828379/image.png?ex=6a851458&is=6a83c2d8&hm=49e5d0d7eccdad937f19433c465a1656e61de8d5a68bd6836c51fb8666977d94&=&format=webp&quality=lossless"
+    SNIPE_GA_GIFT = "https://media.discordapp.net/attachments/1406782694423007316/1408018176381292595/image.png?ex=6a85759c&is=6a84241c&hm=1b3425c9400f3451ad96e0ff2998e8b15265981c58ea775dfe53162ca437381f&=&format=webp&quality=lossless"
     moon = "https://media.discordapp.net/attachments/1394913073520967680/1492434060843421888/image.png?ex=69db5108&is=69d9ff88&hm=609851af1b6916b3b72a25129b9bc476b47785ca9c7f5689aa91bf85c15a3546&=&format=webp&quality=lossless&width=480&height=480"
     fries_shrine = "https://cdn.discordapp.com/attachments/1493871255475191888/1500720035327643719/file_0000000070c4720ba2adc4a0a35df2fc.png?ex=69f975f2&is=69f82472&hm=56ffc4a183005c7ce466ef2c963eceb3e10f6d897be58c3569a99f819b804c27"
 

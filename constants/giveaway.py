@@ -6,6 +6,7 @@ from constants.celestial_constants import (
 
 REQUIRED_ROLES = [
     CELESTIAL_ROLES.staff,
+    CELESTIAL_ROLES.giveaway_host,
     CELESTIAL_ROLES.khy_role
 ]
 ALLOWED_JOIN_ROLES = [CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.cosmic_catch_goal]

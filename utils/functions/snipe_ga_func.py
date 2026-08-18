@@ -1,37 +1,18 @@
 import asyncio
 import random
-import time
 from datetime import datetime, timedelta
 
 import discord
-from discord import app_commands
-from discord.ext import commands, tasks
 
 import utils.cache.global_variables as globals
 from constants.aesthetics import Thumbnails as Decor_Thumbnails
-from constants.celestial_constants import (
-    CELESTIAL_ROLES,
-    CELESTIAL_SERVER_ID,
-    CELESTIAL_TEXT_CHANNELS,
-    KHY_USER_ID,
-    DEFAULT_EMBED_COLOR
-)
-from constants.giveaway import (
-    ALLOWED_JOIN_ROLES,
-    BLACKLISTED_ROLES,
-    DEFAULT_ALLOWED_DISPLAY,
-    REQUIRED_ROLES,
-    Extra_Entries,
-    format_roles_display,
-
-)
+from constants.celestial_constants import CELESTIAL_ROLES, DEFAULT_EMBED_COLOR
+from constants.giveaway import BLACKLISTED_ROLES
 from utils.functions.pretty_defer import pretty_defer
 from utils.logs.pretty_log import pretty_log
-from utils.functions.colors import get_random_snorlax_color
 
-TESTING = True
 ALLOWED_JOIN_ROLES = [
-    CELESTIAL_ROLES.celestialnova_,
+    CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.cosmic_catch_goal
 ]
 
 
@@ -58,7 +39,6 @@ def build_snipe_ga_embed(
     ends_at: datetime = None,
     winner=None,
     winner_count: int = None,
-    giveaway_type="clan",
 ):
     """Builds the embed for the snipe giveaway."""
     ends_text = f"<t:{int(ends_at.timestamp())}:R>" if ends_at else "Unknown"
@@ -74,9 +54,8 @@ def build_snipe_ga_embed(
             winner_mentions = winner.mention
         else:
             winner_mentions = str(winner)
-    if giveaway_type == "clan":
-        allowed_roles_display = format_roles_display(ALLOWED_JOIN_ROLES, host.guild)
-        allowed_roles_str = f"- **Allowed roles:** {allowed_roles_display}\n"
+    allowed_roles_display = format_roles_display(ALLOWED_JOIN_ROLES, host.guild)
+    allowed_roles_str = f"- **Allowed roles:** {allowed_roles_display}\n"
 
     blacklisted_roles_display = format_roles_display(BLACKLISTED_ROLES, host.guild)
     desc = f"""## SNIPE GIVEAWAY
@@ -103,7 +82,6 @@ class SnipeGAView(discord.ui.View):
         self,
         bot,
         prize: str,
-        giveaway_type: str,
         winners_count: int = 1,
         author=None,
         embed_color=None,
@@ -115,7 +93,7 @@ class SnipeGAView(discord.ui.View):
         self.author = author
         self.host = author
         self.winners_count = winners_count
-        self.giveaway_type = giveaway_type
+
         self.timeout = timeout  # Explicitly store timeout
         self.ends_at = (
             datetime.now() + timedelta(seconds=timeout or 0) if timeout else None
@@ -161,19 +139,6 @@ class SnipeGAView(discord.ui.View):
                 r.id for r in member.roles
             }  # Ensure member_roles is always defined
 
-            if self.giveaway_type == "clan":
-                # Exception: allow seafoam role if TESTING is True
-                missing_roles = [
-                    f"<@&{role_id}>"
-                    for role_id in ALLOWED_JOIN_ROLES
-                    if role_id not in member_roles
-                ]
-                has_seafoam = CELESTIAL_ROLES.seafoam in member_roles
-                if missing_roles and not (TESTING and has_seafoam):
-                    await defer.stop(
-                        f"❌ You are missing the required roles to join the giveaway: {', '.join(missing_roles)}"
-                    )
-                    return
 
             blacklisted_roles = [
                 f"<@&{role_id}>"
@@ -184,6 +149,15 @@ class SnipeGAView(discord.ui.View):
                 await defer.stop(
                     f"❌ You are blacklisted from joining the giveaway due to: {', '.join(blacklisted_roles)}"
                 )
+                return
+
+            missing_roles = [
+                f"<@&{role_id}>"
+                for role_id in ALLOWED_JOIN_ROLES
+                if role_id not in member_roles
+            ]
+            if missing_roles:
+                await defer.stop(f"❌ You are missing the following required roles: {', '.join(missing_roles)}")
                 return
 
             if member.id in self.joined_users:
@@ -201,7 +175,6 @@ class SnipeGAView(discord.ui.View):
                 host=self.host,
                 prize=self.prize,
                 entries=len(self.joined_users),
-                giveaway_type=self.giveaway_type,
                 ends_at=self.ends_at,
                 winner_count=self.winners_count,
             )
@@ -257,7 +230,6 @@ class SnipeGAView(discord.ui.View):
         self.winner = winners
 
         updated_embed = build_snipe_ga_embed(
-            giveaway_type=self.giveaway_type,
             host=self.host,
             prize=self.prize,
             entries=len(self.joined_users),

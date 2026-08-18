@@ -1,21 +1,13 @@
-import random
 import time
 from datetime import datetime, timedelta
 
 import discord
-from discord import app_commands
-from discord.ext import commands, tasks
-from utils.functions.pretty_defer import pretty_defer
+from discord.ext import commands
 
 import utils.cache.global_variables as globals
-from constants.celestial_constants import (
-    CELESTIAL_ROLES,
-    CELESTIAL_SERVER_ID,
-    CELESTIAL_TEXT_CHANNELS,
-    KHY_USER_ID,
-    DEFAULT_EMBED_COLOR
-)
+from constants.celestial_constants import CELESTIAL_ROLES, DEFAULT_EMBED_COLOR
 from constants.giveaway import REQUIRED_ROLES
+from utils.functions.pretty_defer import pretty_defer
 from utils.functions.snipe_ga_func import SnipeGAView, build_snipe_ga_embed
 from utils.logs.pretty_log import pretty_log
 
@@ -46,9 +38,6 @@ def reset_cooldown(user_id: int):
 async def snipe_ga_func(
     bot: commands.Bot,
     interaction: discord.Interaction,
-    prize: str,
-    duration: int,
-    winners: int = 1,
 
 ):
     """Starts a quick snipe giveaway."""
@@ -65,18 +54,14 @@ async def snipe_ga_func(
         )
         return
 
+    prize = "???"
+    duration = SNIPE_GA_DURATION_SECONDS
+    winners = 1
+
     # Check if there is an active snipe giveaway
     if globals.snipe_ga_active:
         await interaction.response.send_message(
             "There is already an active snipe giveaway. Please wait for it to finish before starting a new one.",
-            ephemeral=True,
-        )
-        return
-
-    # Duration must be more than or equal to 15 seconds but less than or equal to 1 minute
-    if duration < 15 or duration > 60:
-        await interaction.response.send_message(
-            "Please specify a duration between 15 and 60 seconds.",
             ephemeral=True,
         )
         return
@@ -90,18 +75,15 @@ async def snipe_ga_func(
         content="Starting snipe giveaway...",
         ephemeral=True,
     )
-    giveaway_type = "clan"  # For now, we will only have clan giveaways for snipe
     ends_at = datetime.now() + timedelta(seconds=duration)
-    content = f"SNIPE <@&{CELESTIAL_ROLES.giveaways}>!"
+    content = f"<@&{CELESTIAL_ROLES.snipe_giveaways}>!"
     snipe_ga_embed = build_snipe_ga_embed(
-        giveaway_type=giveaway_type,
         host=interaction.user,
         prize=prize,
         ends_at=ends_at,
     )
     view = SnipeGAView(
         bot=bot,
-        giveaway_type=giveaway_type,
         prize=prize,
         author=interaction.user,
         embed_color=DEFAULT_EMBED_COLOR,
@@ -117,11 +99,11 @@ async def snipe_ga_func(
         )
         view.message = ga_msg
         await view.wait()
-        await view.end_giveaway()
         globals.snipe_ga_active = False
     except Exception as e:
         globals.snipe_ga_active = False
-        await loader.error(
+        await interaction.followup.send(
             content="An error occurred while starting the snipe giveaway.",
+            ephemeral=True,
         )
         pretty_log("error", f"SnipeGA command error: {e}")
