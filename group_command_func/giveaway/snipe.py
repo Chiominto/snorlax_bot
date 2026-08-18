@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 
 import utils.cache.global_variables as globals
-from constants.celestial_constants import CELESTIAL_ROLES, DEFAULT_EMBED_COLOR
+from constants.celestial_constants import CELESTIAL_ROLES, DEFAULT_EMBED_COLOR, CELESTIAL_TEXT_CHANNELS
 from constants.giveaway import REQUIRED_ROLES
 from utils.functions.pretty_defer import pretty_defer
 from utils.functions.snipe_ga_func import SnipeGAView, build_snipe_ga_embed
@@ -41,6 +41,13 @@ async def snipe_ga_func(
 
 ):
     """Starts a quick snipe giveaway."""
+
+    if interaction.channel.id != CELESTIAL_TEXT_CHANNELS.giveaways:
+        await interaction.response.send_message(
+            f"This command can only be used in <#{CELESTIAL_TEXT_CHANNELS.giveaways}>.",
+            ephemeral=True,
+        )
+        return
 
     # Check if user has required roles to use the command
     user_roles = [role.id for role in interaction.user.roles]
