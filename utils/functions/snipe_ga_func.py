@@ -10,7 +10,7 @@ from constants.celestial_constants import CELESTIAL_ROLES, DEFAULT_EMBED_COLOR
 from constants.giveaway import BLACKLISTED_ROLES
 from utils.functions.pretty_defer import pretty_defer
 from utils.logs.pretty_log import pretty_log
-
+from utils.db.snipe_ga_wins_db import upsert_snipe_ga_win
 ALLOWED_JOIN_ROLES = [
     CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.cosmic_catch_goal
 ]
@@ -126,6 +126,7 @@ class SnipeGAView(discord.ui.View):
     async def join_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
+        from utils.cache.snipe_ga_wins_cache import determine_if_user_is_eligible
         defer = await pretty_defer(interaction=interaction, content="Please wait....")
 
         try:
@@ -162,6 +163,15 @@ class SnipeGAView(discord.ui.View):
 
             if member.id in self.joined_users:
                 await defer.stop("❌ You already joined the giveaway!")
+                return
+
+
+            # Check if user is eligible based on snipe giveaway wins
+            is_eligible, reset_time = await determine_if_user_is_eligible(self.bot, member.id)
+            if not is_eligible:
+                await defer.stop(
+                    f"❌ You have reached the maximum number of snipe giveaway wins (3). Please wait for your cooldown to expire before joining again. (Reset time: <t:{reset_time}:f>)"
+                )
                 return
 
             self.joined_users.add(member.id)
@@ -228,6 +238,8 @@ class SnipeGAView(discord.ui.View):
 
         # Store winners for later use
         self.winner = winners
+        for winner in winners:
+            await upsert_snipe_ga_win(self.bot, winner.id, winner.name)
 
         updated_embed = build_snipe_ga_embed(
             host=self.host,

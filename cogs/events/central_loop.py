@@ -6,6 +6,7 @@ from utils.logs.pretty_log import pretty_log
 
 # 🧹 Import your scheduled tasks
 from utils.background_tasks.central_loop_task.giveaway_end_checker import giveaway_end_checker
+from utils.background_tasks.central_loop_task.snipe_ga_win_reset_checker import snipe_ga_win_reset_checker
 
 TEST_SECONDS = 1
 ACTUAL_SECONDS = 60
@@ -52,6 +53,8 @@ class CentralLoop(commands.Cog):
                 # 🎁 Check and end due giveaways
                 await giveaway_end_checker(self.bot)
 
+                # 💤 Check and reset expired snipe giveaway wins
+                await snipe_ga_win_reset_checker(self.bot)
 
             except Exception as e:
                 pretty_log(
@@ -79,5 +82,6 @@ async def setup(bot: commands.Bot):
     print("\n[📋 CENTRAL LOOP CHECKLIST] Scheduled tasks loaded:")
     print("  ─────────────────────────────────────────────")
     print("  ✅  🎁 giveaway_end_checker")
+    print("  ✅  💤 snipe_ga_win_reset_checker")
     print("  💸 CentralLoop ticking every 60 seconds!")
     print("  ─────────────────────────────────────────────\n")

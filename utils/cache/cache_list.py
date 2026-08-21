@@ -131,6 +131,20 @@ utility_cache: dict[int, dict[str, str | dict[str, str]]] = {}
 #   },
 
 
+
+# 🔮────────────────────────────────────────────
+#       ⚡ Snipe GA Wins Cache
+# 👻────────────────────────────────────────────
+snipe_ga_wins_cache: dict[int, dict[str, str | int]] = {}
+# Structure:
+# {
+#   user_id: {
+#     "user_name": str,
+#     "ga_wins": int,
+#     "resets_on": int,
+#   }
+# }
+
 processing_end_giveaway_message_ids = set()
 
 
