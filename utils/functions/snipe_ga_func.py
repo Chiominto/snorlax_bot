@@ -260,9 +260,9 @@ class SnipeGAView(discord.ui.View):
         content = f"🎊 Congrats {', '.join([winner.mention for winner in winners])} 🎊 for winning the **Snipe Giveaway**! 🏆✨"
 
         desc = f"""### 🏅 Snipe Giveaway Winner(s):\n🎉 {', '.join([winner.mention for winner in winners])} 🎉\n"""
-
-        participants_desc = "👥 **Participants:**\n" + "\n".join(joiners_mentions)
-        full_description = desc + participants_desc
+        hosted_by_desc = f"👤 **Hosted By:** {self.host.mention}\n"
+        participants_desc = "\n👥 **Participants:**\n" + "\n".join(joiners_mentions)
+        full_description = desc + hosted_by_desc + participants_desc
 
         embed = discord.Embed(
             description=full_description,
