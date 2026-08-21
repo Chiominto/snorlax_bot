@@ -8,9 +8,10 @@ import utils.cache.global_variables as globals
 from constants.aesthetics import Thumbnails as Decor_Thumbnails
 from constants.celestial_constants import CELESTIAL_ROLES, DEFAULT_EMBED_COLOR
 from constants.giveaway import BLACKLISTED_ROLES
+from utils.db.snipe_ga_wins_db import upsert_snipe_ga_win
 from utils.functions.pretty_defer import pretty_defer
 from utils.logs.pretty_log import pretty_log
-from utils.db.snipe_ga_wins_db import upsert_snipe_ga_win
+
 ALLOWED_JOIN_ROLES = [
     CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.cosmic_catch_goal
 ]
@@ -126,7 +127,8 @@ class SnipeGAView(discord.ui.View):
     async def join_button(
         self, interaction: discord.Interaction, button: discord.ui.Button
     ):
-        from utils.cache.snipe_ga_wins_cache import determine_if_user_is_eligible
+        from utils.cache.snipe_ga_wins_cache import \
+            determine_if_user_is_eligible
         defer = await pretty_defer(interaction=interaction, content="Please wait....")
 
         try:
@@ -256,12 +258,16 @@ class SnipeGAView(discord.ui.View):
             for uid in self.joined_users
             if guild.get_member(uid) and uid not in winner_ids
         ]
+        total_participants = len(joiners_mentions)
+        if len(joiners_mentions) > 20:
+            overflow = len(joiners_mentions) - 20
+            joiners_mentions = joiners_mentions[:20] + [f"and {overflow} others"]
 
         content = f"🎊 Congrats {', '.join([winner.mention for winner in winners])} 🎊 for winning the **Snipe Giveaway**! 🏆✨"
 
         desc = f"""### 🏅 Snipe Giveaway Winner(s):\n🎉 {', '.join([winner.mention for winner in winners])} 🎉\n"""
         hosted_by_desc = f"👤 **Hosted By:** {self.host.mention}\n"
-        participants_desc = "\n👥 **Participants:**\n" + "\n".join(joiners_mentions)
+        participants_desc = f"\n👥 **Participants ({total_participants}):**\n" + "\n".join(joiners_mentions)
         full_description = desc + hosted_by_desc + participants_desc
 
         embed = discord.Embed(
