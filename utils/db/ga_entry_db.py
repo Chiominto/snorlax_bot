@@ -306,23 +306,27 @@ async def delete_ga_entry(bot: discord.Client, giveaway_id: int, user_id: int):
 
 
 async def delete_all_user_ga_rows(bot: discord.Client, user_id: int):
-    """Removes all giveaway rows for a user and returns a list of giveaway ids that user got removed from."""
+    """Removes all non-ended giveaway rows for a user and returns a list of giveaway ids that user got removed from."""
     try:
         async with bot.pg_pool.acquire() as conn:
             records = await conn.fetch(
                 """
-                SELECT giveaway_id FROM giveaway_entries
-                WHERE user_id = $1
+                SELECT ge.giveaway_id FROM giveaway_entries ge
+                JOIN giveaways g ON ge.giveaway_id = g.giveaway_id
+                WHERE ge.user_id = $1 AND g.ended = FALSE
                 """,
                 user_id,
             )
             giveaway_ids = [record["giveaway_id"] for record in records]
+            if not giveaway_ids:
+                return []
             await conn.execute(
                 """
                 DELETE FROM giveaway_entries
-                WHERE user_id = $1
+                WHERE user_id = $1 AND giveaway_id = ANY($2::int[])
                 """,
                 user_id,
+                giveaway_ids,
             )
             pretty_log(
                 "info",

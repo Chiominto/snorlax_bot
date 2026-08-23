@@ -1,20 +1,21 @@
 import discord
 
 from constants.aesthetics import *
-from constants.giveaway import ALLOWED_JOIN_ROLES, BLACKLISTED_ROLES, Extra_Entries
-from constants.celestial_constants import CELESTIAL_ROLES, CELESTIAL_SERVER_ID, CELESTIAL_TEXT_CHANNELS
+from constants.celestial_constants import (CELESTIAL_ROLES,
+                                           CELESTIAL_SERVER_ID,
+                                           CELESTIAL_TEXT_CHANNELS)
+from constants.giveaway import (ALLOWED_JOIN_ROLES, BLACKLISTED_ROLES,
+                                Extra_Entries)
+from utils.db.celestial_members_db import fetch_member_channel_id
 from utils.db.ga_db import fetch_all_giveaway_by_type, fetch_giveaway_by_id
-from utils.db.ga_entry_db import (
-    delete_all_user_ga_rows,
-    delete_ga_entry,
-    fetch_all_user_ga_entries,
-    update_ga_entry,
-)
-from utils.logs.debug_log import debug_log, enable_debug
-from utils.logs.pretty_log import pretty_log
+from utils.db.ga_entry_db import (delete_all_user_ga_rows, delete_ga_entry,
+                                  fetch_all_user_ga_entries,
+                                  fetch_all_user_ga_rows, update_ga_entry)
 from utils.functions.design_embed import design_embed
 from utils.functions.thumbnails import random_ga_thumbnail_url
-from utils.db.celestial_members_db import fetch_member_channel_id
+from utils.logs.debug_log import debug_log, enable_debug
+from utils.logs.pretty_log import pretty_log
+
 
 async def send_ga_info_dm(member: discord.Member, embed: discord.Embed):
     # Try to send DM to user with giveaway info
@@ -137,20 +138,23 @@ async def giveaway_role_remove_handler(
         if not type_giveaways:
             return
 
+        user_entered_ids = set(await fetch_all_user_ga_rows(bot, member.id))
+        if not user_entered_ids:
+            return
+
         giveaway_links = []
         for giveaway in type_giveaways:
             giveaway_id = giveaway["giveaway_id"]
-            channel_id = giveaway["channel_id"]
-            message_id = giveaway["message_id"]
-            message_link = f"https://discord.com/channels/{CELESTIAL_SERVER_ID}/{channel_id}/{message_id}"
+            if giveaway_id not in user_entered_ids:
+                continue
             await delete_ga_entry(bot, giveaway_id, member.id)
-
-            giveaway_line = f"[- Giveaway ID {giveaway['giveaway_id']}](https://discord.com/channels/{CELESTIAL_SERVER_ID}/{giveaway['channel_id']}/{giveaway['message_id']})"
+            giveaway_line = f"[- Giveaway ID {giveaway_id}](https://discord.com/channels/{CELESTIAL_SERVER_ID}/{giveaway['channel_id']}/{giveaway['message_id']})"
             giveaway_links.append(giveaway_line)
 
-        giveaway_links_text = (
-            "\n".join(giveaway_links) if giveaway_links else "No active giveaways"
-        )
+        if not giveaway_links:
+            return
+
+        giveaway_links_text = "\n".join(giveaway_links)
         embed = discord.Embed(
             title="Giveaway Entry Removal",
             description=(
