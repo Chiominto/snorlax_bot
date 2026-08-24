@@ -15,7 +15,9 @@ from utils.logs.pretty_log import pretty_log
 ALLOWED_JOIN_ROLES = [
     CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.cosmic_catch_goal
 ]
-
+BLACKLISTED_TO_WIN_USER_IDS =[
+    1350620685449298000, # Elven
+]
 
 def format_roles_display(role_ids, guild: discord.Guild) -> str:
 
@@ -223,12 +225,18 @@ class SnipeGAView(discord.ui.View):
             self.stop()
             return
 
+        if len(self.joined_users) < 3:
+            await self.message.channel.send("❌ Minimum participant count is 3. The snipe giveaway has ended without a winner.")
+            self.stop()
+            return
+
         guild = self.message.guild
 
         # Random fair selection for multiple winners
         winners_count = getattr(self, "winners_count", 1)
+        eligible_pool = [uid for uid in self.joined_users if uid not in BLACKLISTED_TO_WIN_USER_IDS]
         winner_ids = random.sample(
-            list(self.joined_users), min(winners_count, len(self.joined_users))
+            eligible_pool, min(winners_count, len(eligible_pool))
         )
         winners = [guild.get_member(wid) for wid in winner_ids if guild.get_member(wid)]
 

@@ -7,6 +7,7 @@ from utils.logs.pretty_log import pretty_log
 
 from .daily_pray_reset import daily_pray_reset
 from .fry_point_reset import fry_point_reset
+from .snipe_channel_lock_unlock import lock_snipe_channel, unlock_snipe_channel
 
 NYC = zoneinfo.ZoneInfo("America/New_York")  # auto-handles EST/EDT
 
@@ -83,5 +84,56 @@ async def setup_scheduler(bot):
         pretty_log(
             "error",
             f"Failed to schedule 'fry_point_reset': {e}",
+            label="SCHEDULER",
+        )
+
+    # ✨─────────────────────────────────────────────────────────
+    # 🔒 SNIPE CHANNEL LOCK — Every Sunday Midnight (EST)
+    # ✨─────────────────────────────────────────────────────────
+    try:
+        snipe_channel_lock_job = scheduler_manager.add_cron_job(
+            func=lock_snipe_channel,
+            name="snipe_channel_lock",
+            hour=0,
+            minute=0,
+            day_of_week="sun",
+            timezone=NYC,  # Schedule based on NYC time (handles EST/EDT)
+            args=[bot],
+        )
+        next_run = snipe_channel_lock_job.next_run_time
+        pretty_log(
+            "ready",
+            f"✅ Scheduled 'snipe_channel_lock' to run at {format_next_run_manila(next_run)}",
+            label="SCHEDULER",
+        )
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Failed to schedule 'snipe_channel_lock': {e}",
+            label="SCHEDULER",
+        )
+    # ✨─────────────────────────────────────────────────────────
+    # 🔓 SNIPE CHANNEL UNLOCK — Every Tuesday Midnight (EST)
+    # ✨─────────────────────────────────────────────────────────
+    try:
+        snipe_channel_unlock_job = scheduler_manager.add_cron_job(
+            func=unlock_snipe_channel,
+            name="snipe_channel_unlock",
+            hour=0,
+            minute=0,
+            day_of_week="tue",
+            timezone=NYC,  # Schedule based on NYC time (handles EST/EDT)
+            args=[bot],
+        )
+        next_run = snipe_channel_unlock_job.next_run_time
+        pretty_log(
+            "ready",
+            f"✅ Scheduled 'snipe_channel_unlock' to run at {format_next_run_manila(next_run)}",
+            label="SCHEDULER",
+        )
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Failed to schedule 'snipe_channel_unlock': {e}",
             label="SCHEDULER",
         )
