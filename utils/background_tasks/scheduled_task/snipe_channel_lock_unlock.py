@@ -44,8 +44,8 @@ async def lock_snipe_channel(bot):
         overwrite = discord.PermissionOverwrite()
         overwrite.send_messages = False
         await snipe_channel.set_permissions(guild.default_role, overwrite=overwrite)
-        await snipe_channel.set_permissions(celestial_nova_role, overwrite=discord.PermissionOverwrite(send_messages=True))
-        await snipe_channel.set_permissions(giveaway_host_role, overwrite=discord.PermissionOverwrite(send_messages=True))
+        await snipe_channel.set_permissions(celestial_nova_role, overwrite=discord.PermissionOverwrite(send_messages=False))
+        await snipe_channel.set_permissions(giveaway_host_role, overwrite=discord.PermissionOverwrite(send_messages=False))
     except Exception as e:
         pretty_log(
             "error",
@@ -84,11 +84,11 @@ async def unlock_snipe_channel(bot):
         overwrite = discord.PermissionOverwrite()
         overwrite.send_messages = True
         await snipe_channel.set_permissions(guild.default_role, overwrite=overwrite)
-        # Clear role-specific overwrites set during lock
+
         if celestial_nova_role:
-            await snipe_channel.set_permissions(celestial_nova_role, overwrite=None)
+            await snipe_channel.set_permissions(celestial_nova_role, overwrite=discord.PermissionOverwrite(send_messages=True))
         if giveaway_host_role:
-            await snipe_channel.set_permissions(giveaway_host_role, overwrite=None)
+            await snipe_channel.set_permissions(giveaway_host_role, overwrite=discord.PermissionOverwrite(send_messages=True))
         pretty_log(
             "ready",
             f"✅ Snipe channel unlocked successfully.",
