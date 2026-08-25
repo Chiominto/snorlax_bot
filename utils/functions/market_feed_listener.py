@@ -4,20 +4,15 @@ import discord
 from discord import Embed
 
 from constants.aesthetics import Emojis
-from constants.celestial_constants import CELESTIAL_ROLES, CELESTIAL_TEXT_CHANNELS
-from constants.paldea_galar_dict import (
-    Legendary_icon_url,
-    get_rarity_by_color,
-    icon_url_map,
-    paldean_mons,
-)
-from utils.cache.cache_list import (
-    _market_alert_index,
-    market_alert_cache,
-    pokemon_cache,
-    processed_market_feed_message_ids,
-    processed_snipe_ids,
-)
+from constants.celestial_constants import (CELESTIAL_ROLES,
+                                           CELESTIAL_TEXT_CHANNELS)
+from constants.paldea_galar_dict import (Legendary_icon_url,
+                                         get_rarity_by_color, icon_url_map,
+                                         paldean_mons)
+from utils.cache.cache_list import (_market_alert_index, market_alert_cache,
+                                    pokemon_cache,
+                                    processed_market_feed_message_ids,
+                                    processed_snipe_ids)
 from utils.cache.utilities_cache import phone_copy_description
 from utils.db.celestial_members_db import fetch_member_channel_id
 from utils.db.market_alert_db import update_channel_ids_for_user
@@ -387,15 +382,21 @@ async def process_market_feed_message(
         listed_price_str = re.sub(r"<a?:\w+:\d+>", "", fields.get("Listed Price", "0"))
         match_price = re.search(r"(\d[\d,]*)", listed_price_str)
         listed_price = int(match_price.group(1).replace(",", "")) if match_price else 0
+        if listed_price == 0:
+            debug_log(f"Skipping embed: listed_price is 0 for {poke_name}")
+            continue
         lowest_market_str = re.sub(
             r"<a?:\w+:\d+>", "", fields.get("Lowest Market", "0")
         )
         lowest_market_match = re.search(r"(\d[\d,]*)", lowest_market_str)
-        lowest_market = (
-            int(lowest_market_match.group(1).replace(",", ""))
-            if lowest_market_match
-            else 0
-        )
+        if lowest_market_match:
+            lowest_market = int(lowest_market_match.group(1).replace(",", ""))
+            if lowest_market == 0:
+                debug_log(f"Skipping embed: lowest_market is 0 for {poke_name}")
+                continue
+        else:
+            # No digits found — treat as unknown ("?")
+            lowest_market = "?"
         listing_seen = fields.get("Listing Seen", "N/A")
         amount = fields.get("Amount", "1")
         embed_color = embed.color.value
@@ -422,26 +423,7 @@ async def process_market_feed_message(
                     message,
                     embed,
                 )
-            elif lowest_market == 0:
-                debug_log(
-                    f"Snipe detected for {poke_name} #{poke_dex}: listed_price={listed_price}, lowest_market unknown"
-                )
-                pretty_log(
-                    "snipe",
-                    f"Detected snipe listing for {poke_name} #{poke_dex} at {listed_price} (lowest market unknown)",
-                )
-                lowest_market = "?"
-                await snipe_handler(
-                    bot,
-                    poke_name,
-                    listed_price,
-                    original_id,
-                    lowest_market,
-                    amount,
-                    listing_seen,
-                    message,
-                    embed,
-                )
+
         # Check for market alerts
         if not market_alert_cache:
             debug_log("Market alert cache is empty, skipping alert checks.")
