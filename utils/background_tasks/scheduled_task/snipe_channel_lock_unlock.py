@@ -41,11 +41,10 @@ async def lock_snipe_channel(bot):
 
     # Lock the channel by removing 'Send Messages' permission for everyone except Celestial Nova and Giveaway Host roles
     try:
-        overwrite = discord.PermissionOverwrite()
-        overwrite.send_messages = False
-        await snipe_channel.set_permissions(guild.default_role, overwrite=overwrite)
-        await snipe_channel.set_permissions(celestial_nova_role, overwrite=discord.PermissionOverwrite(send_messages=False))
-        await snipe_channel.set_permissions(giveaway_host_role, overwrite=discord.PermissionOverwrite(send_messages=False))
+        for role in (celestial_nova_role, giveaway_host_role):
+            overwrite = snipe_channel.overwrites_for(role)
+            overwrite.send_messages = False
+            await snipe_channel.set_permissions(role, overwrite=overwrite)
     except Exception as e:
         pretty_log(
             "error",
@@ -81,14 +80,14 @@ async def unlock_snipe_channel(bot):
 
     # Unlock the channel by restoring 'Send Messages' permission for everyone
     try:
-        overwrite = discord.PermissionOverwrite()
-        overwrite.send_messages = True
-        await snipe_channel.set_permissions(guild.default_role, overwrite=overwrite)
+        default_overwrite = snipe_channel.overwrites_for(guild.default_role)
+        default_overwrite.send_messages = True
+        await snipe_channel.set_permissions(guild.default_role, overwrite=default_overwrite)
 
-        if celestial_nova_role:
-            await snipe_channel.set_permissions(celestial_nova_role, overwrite=discord.PermissionOverwrite(send_messages=True))
-        if giveaway_host_role:
-            await snipe_channel.set_permissions(giveaway_host_role, overwrite=discord.PermissionOverwrite(send_messages=True))
+        for role in filter(None, (celestial_nova_role, giveaway_host_role)):
+            overwrite = snipe_channel.overwrites_for(role)
+            overwrite.send_messages = True
+            await snipe_channel.set_permissions(role, overwrite=overwrite)
         pretty_log(
             "ready",
             f"✅ Snipe channel unlocked successfully.",
