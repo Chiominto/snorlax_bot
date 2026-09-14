@@ -23,6 +23,7 @@ async def load_server_currency_cache(bot: discord.Client):
                 "user_name": entry["user_name"],
                 "currency": entry["currency"],
                 "fry_points": entry["fry_points"],
+                "burnt_fry_points": entry["burnt_fry_points"],
             }
 
         pretty_log(
@@ -49,6 +50,7 @@ def upsert_user_currency_cache(user_id: int, user_name: str, currency: int = 0):
     if user_id in server_currency_cache:
         server_currency_cache[user_id]["user_name"] = user_name
         server_currency_cache[user_id]["currency"] = currency
+
     else:
         server_currency_cache[user_id] = {
             "user_name": user_name,
@@ -68,22 +70,36 @@ def upsert_user_fry_points_cache(user_id: int, user_name: str, fry_points: int =
             "fry_points": fry_points,
         }
 
+def upsert_user_burnt_fry_points_cache(user_id: int, user_name: str, burnt_fry_points: int = 0):
+    if user_id in server_currency_cache:
+        server_currency_cache[user_id]["user_name"] = user_name
+        server_currency_cache[user_id]["burnt_fry_points"] = burnt_fry_points
+    else:
+        server_currency_cache[user_id] = {
+            "user_name": user_name,
+            "currency": 0,
+            "fry_points": 0,
+            "burnt_fry_points": burnt_fry_points,
+        }
 
-def upsert_user_currency_and_fry_points_cache(
+def upsert_user_currency_and_fry_points_and_burnt_fry_points_cache(
     user_id: int,
     user_name: str,
     currency: int = 0,
     fry_points: int = 0,
+    burnt_fry_points: int = 0,
 ):
     if user_id in server_currency_cache:
         server_currency_cache[user_id]["user_name"] = user_name
         server_currency_cache[user_id]["currency"] = currency
         server_currency_cache[user_id]["fry_points"] = fry_points
+        server_currency_cache[user_id]["burnt_fry_points"] = burnt_fry_points
     else:
         server_currency_cache[user_id] = {
             "user_name": user_name,
             "currency": currency,
             "fry_points": fry_points,
+            "burnt_fry_points": burnt_fry_points,
         }
 
 
@@ -102,7 +118,24 @@ def reset_all_fry_points_only_cache():
         server_currency_cache[user_id]["fry_points"] = 0
 
 
+def reset_all_burnt_fry_points_only_cache():
+    for user_id in server_currency_cache:
+        server_currency_cache[user_id]["burnt_fry_points"] = 0
+
+def reset_all_fry_points_and_burnt_fry_points_cache():
+    for user_id in server_currency_cache:
+        server_currency_cache[user_id]["fry_points"] = 0
+        server_currency_cache[user_id]["burnt_fry_points"] = 0
+
+
 def reset_all_currency_and_fry_points_cache():
     for user_id in server_currency_cache:
         server_currency_cache[user_id]["currency"] = 0
         server_currency_cache[user_id]["fry_points"] = 0
+
+
+def reset_all_currency_and_fry_points_and_burnt_fry_points_cache():
+    for user_id in server_currency_cache:
+        server_currency_cache[user_id]["currency"] = 0
+        server_currency_cache[user_id]["fry_points"] = 0
+        server_currency_cache[user_id]["burnt_fry_points"] = 0

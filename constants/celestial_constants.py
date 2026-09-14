@@ -173,6 +173,7 @@ class CELESTIAL_ROLES:
     battle_tower = 1491449861642649680
     elite_server_booster = 1491991752234631330
     top_catcher = 1491991867334594680
+    fry_forsaken = 1548500724605001788
 
 
 # 💦☁────────────────────────────────────────────💦☁
@@ -181,3 +182,4 @@ class CELESTIAL_ROLES:
 class CELESTIAL_EMOJIS:
 
     lordfry = "<:LordFry:1490453099008102410>"
+    burnt_fry = "<:Burnt_Fry_Box:1548296114392928346>"

@@ -148,7 +148,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
     async def balance_leaderboard(
         self,
         interaction: discord.Interaction,
-        type: Literal["All", "Starry Meal", "Fry Points"] = "all",
+        type: Literal["All", "Starry Meal", "Fry Points", "Burnt Fry Points"] = "all",
     ):
         slash_cmd_name = "balance leaderboard"
         await run_command_safe(

@@ -118,3 +118,23 @@ async def fetch_temp_role_by_role_id(bot: discord.Client, role_id: int):
                 f"No temp role found with role ID {role_id}"
             )
         return row
+
+async def fetch_all_users_with_temp_role_by_role_id(
+    bot: discord.Client,
+    role_id: int
+):
+    """Fetch all users with a specific temporary role ID from the database."""
+    async with bot.pg_pool.acquire() as conn:
+        rows = await conn.fetch(
+            """
+            SELECT user_id, user_name, role_id, role_name
+            FROM temp_roles
+            WHERE role_id = $1
+            """,
+            role_id
+        )
+        pretty_log(
+            "info",
+            f"Fetched {len(rows)} users with temp role ID {role_id}"
+        )
+        return rows

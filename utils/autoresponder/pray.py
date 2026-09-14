@@ -3,18 +3,17 @@ import random
 import discord
 
 from constants.aesthetics import Thumbnails
-from constants.celestial_constants import (
-    CELESTIAL_ROLES,
-    CELESTIAL_SERVER_ID,
-    CELESTIAL_TEXT_CHANNELS,
-    KHY_USER_ID,
-)
-from constants.server_currency import FRY_POINT_EMOJI
-from utils.db.server_cooldowns_db import (
-    fetch_user_server_cooldown_for_type,
-    upsert_server_cooldown,
-)
-from utils.db.server_currency_db import fetch_fry_points, upsert_user_fry_points
+from constants.celestial_constants import (CELESTIAL_ROLES,
+                                           CELESTIAL_SERVER_ID,
+                                           CELESTIAL_TEXT_CHANNELS,
+                                           KHY_USER_ID)
+from constants.server_currency import FRY_POINT_EMOJI, BURNT_FRY_EMOJI
+from utils.db.server_cooldowns_db import (fetch_user_server_cooldown_for_type,
+                                          upsert_server_cooldown)
+from utils.db.server_currency_db import (fetch_burnt_fry_points,
+                                         fetch_fry_points,
+                                         upsert_user_burnt_fry_points,
+                                         upsert_user_fry_points)
 from utils.logs.pretty_log import pretty_log
 
 # 1day in seconds
@@ -104,8 +103,15 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
 
     else:
         # Curse
+        burnt_fry_points = await fetch_burnt_fry_points(bot, user.id)
+        if burnt_fry_points is None or burnt_fry_points == 0:
+            new_burnt_fry_points = 1
+        else:
+            new_burnt_fry_points = burnt_fry_points + 1
+        await upsert_user_burnt_fry_points(bot, user.id, user.name, new_burnt_fry_points)
+        burnt_fry_point_reward_str = f"> - The Fries God has cursed you with **1 {BURNT_FRY_EMOJI}**! You now have **{new_burnt_fry_points} {BURNT_FRY_EMOJI}**."
         phrase = random.choice(curses_phrases)
-        content = f"{phrase}"
+        content = f"{phrase}\n{burnt_fry_point_reward_str}"
         embed = discord.Embed(
             title="A Curse from the Fries God",
             description=content,

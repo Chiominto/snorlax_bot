@@ -1,17 +1,15 @@
 import discord
 
-from constants.celestial_constants import (
-    CELESTIAL_ROLES,
-    CELESTIAL_SERVER_ID,
-    CELESTIAL_TEXT_CHANNELS,
-)
-from constants.server_currency import FRY_POINT_EMOJI
+from constants.celestial_constants import (CELESTIAL_ROLES,
+                                           CELESTIAL_SERVER_ID,
+                                           CELESTIAL_TEXT_CHANNELS)
+from constants.server_currency import BURNT_FRY_EMOJI, FRY_POINT_EMOJI
 from utils.db.server_currency_db import (
-    fetch_all_fry_points,
-    get_all_people_with_most_fry_points,
-    reset_all_fry_points_only,
-)
-from utils.db.temp_roles_db import fetch_temp_role_by_role_id, upsert_temp_role
+    fetch_all_fry_points, get_all_people_with_most_burnt_fry_points,
+    get_all_people_with_most_fry_points, reset_all_fry_points_only)
+from utils.db.temp_roles_db import (fetch_all_users_with_temp_role_by_role_id,
+                                    fetch_temp_role_by_role_id,
+                                    upsert_temp_role)
 from utils.logs.pretty_log import pretty_log
 
 
@@ -81,6 +79,15 @@ async def fry_point_reset(bot: discord.Client):
         )
         return
 
+    top_burnt_fry_points = await get_all_people_with_most_burnt_fry_points(bot)
+    if not top_burnt_fry_points:
+        pretty_log(
+            "info",
+            "No burnt fry points data found to reset.",
+            label="FRY POINT RESET",
+        )
+
+
     guild = bot.get_guild(CELESTIAL_SERVER_ID)
     if not guild:
         pretty_log(
@@ -92,10 +99,18 @@ async def fry_point_reset(bot: discord.Client):
     golden_fry_disciple_role = (
         guild.get_role(CELESTIAL_ROLES.golden_fry_disciple) if guild else None
     )
+    fry_forsaken_role = guild.get_role(CELESTIAL_ROLES.fry_forsaken) if guild else None
+
     # Get the previous top fry point holder
     previous_top_holder_id = await fetch_temp_role_by_role_id(
         bot, CELESTIAL_ROLES.golden_fry_disciple
     )
+
+    # Get the previous fry forsaken holder
+    previous_fry_forsaken_user_ids = await fetch_all_users_with_temp_role_by_role_id(
+        bot, CELESTIAL_ROLES.fry_forsaken
+    )
+
     if previous_top_holder_id:
         previous_top_holder = guild.get_member(previous_top_holder_id["user_id"])
         if previous_top_holder:
@@ -117,6 +132,28 @@ async def fry_point_reset(bot: discord.Client):
                         f"Failed to remove Golden Fry Disciple role from previous top holder: {e}",
                         label="FRY POINT RESET",
                     )
+    if previous_fry_forsaken_user_ids:
+        for previous_fry_forsaken_id in previous_fry_forsaken_user_ids:
+            previous_fry_forsaken = guild.get_member(previous_fry_forsaken_id["user_id"])
+            if previous_fry_forsaken:
+            # Remove the fry forsaken role from the previous holder
+                if fry_forsaken_role in previous_fry_forsaken.roles:
+                    try:
+                        await previous_fry_forsaken.remove_roles(
+                            fry_forsaken_role,
+                            reason="Fry point reset - removing old fry forsaken role",
+                        )
+                        pretty_log(
+                            "info",
+                            f"Removed Fry Forsaken role from previous holder {previous_fry_forsaken.display_name} ({previous_fry_forsaken.id})",
+                            label="FRY POINT RESET",
+                        )
+                    except discord.HTTPException as e:
+                        pretty_log(
+                            "error",
+                            f"Failed to remove Fry Forsaken role from previous holder: {e}",
+                            label="FRY POINT RESET",
+                        )
 
     # Channel
     news_channel = bot.get_channel(CELESTIAL_TEXT_CHANNELS.clan_annoucement)
@@ -180,6 +217,48 @@ The sacred fryer oil has settled… the golden potatoes have been counted… and
                     f"Failed to assign Golden Fry Disciple role to new top holder: {e}",
                     label="FRY POINT RESET",
                 )
+    fry_forsaken_message = None
+    if top_burnt_fry_points:
+        burnt_points = top_burnt_fry_points[0]["burnt_fry_points"]
+        burnt_winner_mentions = []
+        for burnt_winner in top_burnt_fry_points:
+            burnt_user_id = burnt_winner["user_id"]
+            burnt_user = bot.get_user(burnt_user_id)
+            burnt_member = guild.get_member(burnt_user_id)
+            burnt_winner_mention = (
+                burnt_user.mention if burnt_user else (burnt_member.mention if burnt_member else f"<@{burnt_user_id}>")
+            )
+            burnt_winner_mentions.append(burnt_winner_mention)
+
+            # Assign the fry forsaken role to the new top burnt fry points holder
+            if fry_forsaken_role and burnt_member:
+                try:
+                    await burnt_member.add_roles(
+                        fry_forsaken_role,
+                        reason="Fry point reset - assigning new top burnt fry points holder role",
+                    )
+                    pretty_log(
+                        "info",
+                        f"Assigned Fry Forsaken role to new top burnt fry points holder {burnt_member.display_name} ({burnt_member.id})",
+                        label="FRY POINT RESET",
+                    )
+                    await upsert_temp_role(
+                        bot,
+                        burnt_member.id,
+                        burnt_member.name,
+                        CELESTIAL_ROLES.fry_forsaken,
+                        fry_forsaken_role.name,
+                    )
+                except discord.HTTPException as e:
+                    pretty_log(
+                        "error",
+                        f"Failed to assign Fry Forsaken role to new top burnt fry points holder: {e}",
+                        label="FRY POINT RESET",
+                    )
+        burnt_winners_joined = ", ".join(burnt_winner_mentions)
+        fry_forsaken_message =f"""“Another month has passed, yet the sacred fries remain untouched. Lord Fry has watched your devotion fade into the darkness, and the Shrine has marked your absence. {burnt_winners_joined} has wandered far from the path of crispy enlightenment with **__{burnt_points}__** {BURNT_FRY_EMOJI}. But fear not—the Fry Box still waits for your return. Redeem yourself, gather your fries, and perhaps next month you shall be welcomed back among the disciples. Until then… you remain Fry Forsaken. 🍟🥀”"""
+
+    if len(top_fry_points) == 1:
         message = f"""👑🍟 ALL HAIL THE SUPREME FRY DISCIPLE 🍟👑
 
 After countless prayers, dangerous levels of grease inhalation, and unwavering devotion to the sacred fryer… {winner_mention} has officially claimed 1ST PLACE at the Fry Praying Shrine with **__{points}__** {FRY_POINT_EMOJI}. 🙏✨
@@ -197,7 +276,10 @@ Side effects of winning may include:
 • Random visions of potatoes
 • Being worshipped by lower fry disciples
 
-Everyone congratulate {winner_mention} for becoming this month’s High Priest of the Holy Fry Shrine 🍟✨"""
+Everyone congratulate {winner_mention} for becoming this month’s High Priest of the Holy Fry Shrine 🍟✨
+
+{fry_forsaken_message or ""}
+"""
 
     elif len(top_fry_points) > 1:
         tied_members = []
@@ -228,6 +310,9 @@ Everyone congratulate {winner_mention} for becoming this month’s High Priest o
             )
         if message:
             await news_channel.send(content=message)
+        elif fry_forsaken_message:
+            # Fry points were tied, so the winner message wasn't built; still announce the burnt fry points loser(s)
+            await news_channel.send(content=fry_forsaken_message)
         if tie_message:
             # Ask clan staff to decide how to handle ties and include tied members
             staff_room_channel = bot.get_channel(CELESTIAL_TEXT_CHANNELS.moderator_only)

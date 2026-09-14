@@ -112,6 +112,7 @@ server_currency_cache: dict[int, dict] = {}
 #   "currency": int,
 #   "raffle_ticket": int,
 #   "fry_points": int,
+#   "burnt_fry_points": int,
 # }
 
 

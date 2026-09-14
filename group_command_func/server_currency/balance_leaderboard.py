@@ -2,8 +2,10 @@ import discord
 from discord.ext import commands
 from discord.ui import Button, View
 
-from constants.celestial_constants import CELESTIAL_SERVER_ID, DEFAULT_EMBED_COLOR
-from constants.server_currency import CURRENCY_EMOJI, FRY_POINT_EMOJI
+from constants.celestial_constants import (CELESTIAL_SERVER_ID,
+                                           DEFAULT_EMBED_COLOR)
+from constants.server_currency import (BURNT_FRY_EMOJI, CURRENCY_EMOJI,
+                                       FRY_POINT_EMOJI)
 from utils.cache.cache_list import server_currency_cache
 from utils.db.server_currency_db import fetch_all_server_currency
 from utils.functions.pretty_defer import pretty_defer
@@ -97,14 +99,27 @@ class Leaderboard_Paginator(View):
 
             fry_points = balance_info.get("fry_points", 0) if balance_info else 0
             fry_points_str = (
-                f"> - {fry_points} {FRY_POINT_EMOJI}" if fry_points > 0 else ""
+                f"> - {fry_points} {FRY_POINT_EMOJI}\n" if fry_points > 0 else ""
+            )
+            burnt_fry_points = balance_info.get("burnt_fry_points", 0) if balance_info else 0
+            burnt_fry_points_str = (
+                f"> - {burnt_fry_points} {BURNT_FRY_EMOJI}\n" if burnt_fry_points > 0 else ""
             )
             if self.type.lower() == "starry meal":
                 fry_points_str = ""  # Hide fry points if type is starry meal
+                burnt_fry_points_str = ""  # Hide burnt fry points if type is starry meal
             if self.type.lower() == "fry points":
                 balance_str = ""  # Hide currency if type is fry points
+                burnt_fry_points_str = ""  # Hide burnt fry points if type is fry points
+            if self.type.lower() == "burnt fry points":
+                balance_str = ""  # Hide currency if type is burnt fry points
+                fry_points_str = ""  # Hide fry points if type is burnt fry points
+                burnt_fry_points = balance_info.get("burnt_fry_points", 0) if balance_info else 0
+                burnt_fry_points_str = (
+                    f"> - {burnt_fry_points} {BURNT_FRY_EMOJI}\n" if burnt_fry_points > 0 else ""
+                )
 
-            field_value_str = f"> - {mention}\n{balance_str}{fry_points_str}"
+            field_value_str = f"> - {mention}\n{balance_str}{fry_points_str}{burnt_fry_points_str}"
             field_name = f"{i}. {display_name} | {username}"
             if i == 1:
                 field_name = f"🥇 {display_name} | {username}"
@@ -164,6 +179,12 @@ async def balance_leaderboard_func(
             (row["user_id"], row.get("fry_points") or 0)
             for row in user_balances
             if (row.get("fry_points") or 0) > 0
+        ]
+    elif type.lower() == "burnt fry points":
+        filtered_balances = [
+            (row["user_id"], row.get("burnt_fry_points") or 0)
+            for row in user_balances
+            if (row.get("burnt_fry_points") or 0) > 0
         ]
     else:
         filtered_balances = [
