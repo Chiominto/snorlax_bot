@@ -6,7 +6,7 @@ from discord.ext import commands
 
 from constants.celestial_constants import (CELESTIAL_SERVER_ID,
                                            DEFAULT_EMBED_COLOR)
-from constants.server_currency import (BURNT_FRY_POINT_EMOJI, CURRENCY_EMOJI,
+from constants.server_currency import (BURNT_FRY_EMOJI, CURRENCY_EMOJI,
                                        FRY_POINT_EMOJI)
 from utils.cache.cache_list import server_currency_cache
 from utils.cache.server_currency_cache import load_server_currency_cache
@@ -130,8 +130,8 @@ async def add_balance_func(
 
     if updated_burnt_fry_points:
         description_parts.append(
-            f"**Burnt Fry Points Added:** {burnt_fry_points} {BURNT_FRY_POINT_EMOJI}\n"
-            f"**New Burnt Fry Points:** {new_burnt_fry_points} {BURNT_FRY_POINT_EMOJI}"
+            f"**Burnt Fry Points Added:** {burnt_fry_points} {BURNT_FRY_EMOJI}\n"
+            f"**New Burnt Fry Points:** {new_burnt_fry_points} {BURNT_FRY_EMOJI}"
         )
     desc = "\n".join(description_parts)
     embed = discord.Embed(
@@ -255,8 +255,8 @@ async def remove_balance_func(
 
     if updated_burnt_fry_points:
         description_parts.append(
-            f"**Burnt Fry Points Removed:** {burnt_fry_points} {BURNT_FRY_POINT_EMOJI}\n"
-            f"**New Burnt Fry Points:** {new_burnt_fry_points} {BURNT_FRY_POINT_EMOJI}"
+            f"**Burnt Fry Points Removed:** {burnt_fry_points} {BURNT_FRY_EMOJI}\n"
+            f"**New Burnt Fry Points:** {new_burnt_fry_points} {BURNT_FRY_EMOJI}"
         )
 
     desc = "\n".join(description_parts)
@@ -399,7 +399,7 @@ async def view_balance_func(
             f"**Member:** {target_member.mention}\n"
             f"**Starry Meals:** {balance} {CURRENCY_EMOJI}\n"
             f"**Fry Points:** {fry_points} {FRY_POINT_EMOJI}\n"
-            f"**Burnt Fry Points:** {burnt_fry_points} {BURNT_FRY_POINT_EMOJI}"
+            f"**Burnt Fry Points:** {burnt_fry_points} {BURNT_FRY_EMOJI}"
         ),
     )
     embed.set_author(
