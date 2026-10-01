@@ -4,9 +4,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from utils.functions.role_checks import *
-from utils.functions.command_safe import run_command_safe
 from group_command_func.server_currency import *
+from utils.functions.command_safe import run_command_safe
+from utils.functions.role_checks import *
 
 
 # 💠────────────────────────────────────────────
@@ -58,6 +58,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
         member="The member to whom you want to add currency",
         starry_meal="The amount of starry meal to add",
         fry_points="The amount of fry points to add",
+        burnt_fry_points="The amount of burnt fry points to add",
     )
     async def balance_add(
         self,
@@ -65,6 +66,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
         member: discord.Member,
         starry_meal: int = None,
         fry_points: int = None,
+        burnt_fry_points: int = None,
     ):
         slash_cmd_name = "balance add"
         await run_command_safe(
@@ -75,6 +77,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
             member=member,
             starry_meal=starry_meal,
             fry_points=fry_points,
+            burnt_fry_points=burnt_fry_points,
         )
 
     balance_add.extras = {"category": "Staff"}
@@ -90,6 +93,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
         member="The member from whom you want to remove currency",
         starry_meal="The amount of starry meal to remove",
         fry_points="The amount of fry points to remove",
+        burnt_fry_points="The amount of burnt fry points to remove",
     )
     async def balance_remove(
         self,
@@ -97,6 +101,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
         member: discord.Member,
         starry_meal: int = None,
         fry_points: int = None,
+        burnt_fry_points: int = None,
     ):
         slash_cmd_name = "balance remove"
         await run_command_safe(
@@ -107,6 +112,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
             member=member,
             starry_meal=starry_meal,
             fry_points=fry_points,
+            burnt_fry_points=burnt_fry_points,
         )
 
     balance_remove.extras = {"category": "Staff"}
@@ -121,7 +127,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
     async def balance_reset(
         self,
         interaction: discord.Interaction,
-        scope: Literal["Starry Meals", "Fry Points", "All"],
+        scope: Literal["Starry Meals", "Fry Points", "Burnt Fry Points", "All"],
     ):
         slash_cmd_name = "balance reset"
         await run_command_safe(
@@ -148,7 +154,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
     async def balance_leaderboard(
         self,
         interaction: discord.Interaction,
-        type: Literal["All", "Starry Meal", "Fry Points", "Burnt Fry Points"] = "all",
+        type: Literal["All", "Starry Meals", "Fry Points", "Burnt Fry Points"] = "All",
     ):
         slash_cmd_name = "balance leaderboard"
         await run_command_safe(

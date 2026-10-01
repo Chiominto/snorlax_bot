@@ -6,7 +6,7 @@ from constants.celestial_constants import (CELESTIAL_ROLES,
 from constants.server_currency import BURNT_FRY_EMOJI, FRY_POINT_EMOJI
 from utils.db.server_currency_db import (
     fetch_all_fry_points, get_all_people_with_most_burnt_fry_points,
-    get_all_people_with_most_fry_points, reset_all_fry_points_only)
+    get_all_people_with_most_fry_points, reset_all_fry_points_and_burnt_fry_points, reset_all_fry_points_only)
 from utils.db.temp_roles_db import (fetch_all_users_with_temp_role_by_role_id,
                                     fetch_temp_role_by_role_id,
                                     upsert_temp_role)
@@ -318,8 +318,8 @@ Everyone congratulate {winner_mention} for becoming this month’s High Priest o
             staff_room_channel = bot.get_channel(CELESTIAL_TEXT_CHANNELS.moderator_only)
             if staff_room_channel:
                 await staff_room_channel.send(content=tie_message)
-        # Reset fry points after announcing the leaderboard
-        await reset_all_fry_points_only(bot)
+        # Reset fry points and burnt fry points after announcing the leaderboard
+        await reset_all_fry_points_and_burnt_fry_points(bot)
 
     except discord.HTTPException as e:
         pretty_log(

@@ -16,7 +16,7 @@ ALLOWED_JOIN_ROLES = [
     CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.cosmic_catch_goal
 ]
 BLACKLISTED_TO_WIN_USER_IDS =[
-    1350620685449298000, # Elven
+    123, # sample user ID
 ]
 
 def format_roles_display(role_ids, guild: discord.Guild) -> str:

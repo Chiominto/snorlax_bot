@@ -4,19 +4,21 @@ from zoneinfo import ZoneInfo
 import discord
 from discord.ext import commands
 
-from constants.celestial_constants import CELESTIAL_SERVER_ID, DEFAULT_EMBED_COLOR
-from constants.server_currency import CURRENCY_EMOJI, FRY_POINT_EMOJI
+from constants.celestial_constants import (CELESTIAL_SERVER_ID,
+                                           DEFAULT_EMBED_COLOR)
+from constants.server_currency import (BURNT_FRY_POINT_EMOJI, CURRENCY_EMOJI,
+                                       FRY_POINT_EMOJI)
 from utils.cache.cache_list import server_currency_cache
 from utils.cache.server_currency_cache import load_server_currency_cache
-from utils.db.server_currency_db import (
-    reset_all_currency_and_fry_points,
-    reset_all_currency_only,
-    reset_all_fry_points_only,
-    reset_server_currency_table,
-    upsert_server_currency,
-    upsert_user_currency,
-    upsert_user_fry_points,
-)
+from utils.db.server_currency_db import (reset_all_burnt_fry_points_only,
+                                         reset_all_currency_and_fry_points,
+                                         reset_all_currency_only,
+                                         reset_all_fry_points_only,
+                                         reset_server_currency_table,
+                                         upsert_server_currency,
+                                         upsert_user_burnt_fry_points,
+                                         upsert_user_currency,
+                                         upsert_user_fry_points)
 from utils.functions.pretty_defer import pretty_defer
 from utils.functions.role_checks import is_clan_member, is_staff_member
 from utils.logs.pretty_log import pretty_log
@@ -32,14 +34,15 @@ async def add_balance_func(
     member: discord.Member,
     starry_meal: int = 0,
     fry_points: int = 0,
+    burnt_fry_points: int = 0,
 ):
     """
     Add currency balance and/or raffle tickets to a member.
     """
     # Check if at least one parameter is provided
-    if starry_meal is None and fry_points is None:
+    if starry_meal is None and fry_points is None and burnt_fry_points is None:
         return await interaction.response.send_message(
-            "You must specify at least one of starry_meal or fry points to add.",
+            "You must specify at least one of starry_meal, fry points, or burnt fry points to add.",
             ephemeral=True,
         )
 
@@ -75,6 +78,7 @@ async def add_balance_func(
 
     updated_starry_meal = False
     updated_fry_points = False
+    updated_burnt_fry_points = False
     if starry_meal:
         new_balance = current_balance + starry_meal
         await upsert_user_currency(
@@ -97,6 +101,19 @@ async def add_balance_func(
             fry_points=new_fry_points,
         )
         updated_fry_points = True
+
+    if burnt_fry_points:
+        current_burnt_fry_points = (
+            current_balance_info.get("burnt_fry_points", 0) if current_balance_info else 0
+        )
+        new_burnt_fry_points = current_burnt_fry_points + burnt_fry_points
+        await upsert_user_burnt_fry_points(
+            bot=bot,
+            user_id=member.id,
+            user_name=member.name,
+            burnt_fry_points=new_burnt_fry_points,
+        )
+        updated_burnt_fry_points = True
     # Success embed
     description_parts = [f"**Member:** {member.mention}\n"]
     if updated_starry_meal:
@@ -109,6 +126,12 @@ async def add_balance_func(
         description_parts.append(
             f"**Fry Points Added:** {fry_points} {FRY_POINT_EMOJI}\n"
             f"**New Fry Points:** {new_fry_points} {FRY_POINT_EMOJI}"
+        )
+
+    if updated_burnt_fry_points:
+        description_parts.append(
+            f"**Burnt Fry Points Added:** {burnt_fry_points} {BURNT_FRY_POINT_EMOJI}\n"
+            f"**New Burnt Fry Points:** {new_burnt_fry_points} {BURNT_FRY_POINT_EMOJI}"
         )
     desc = "\n".join(description_parts)
     embed = discord.Embed(
@@ -149,14 +172,15 @@ async def remove_balance_func(
     member: discord.Member,
     starry_meal: int = None,
     fry_points: int = None,
+    burnt_fry_points: int = None,
 ):
     """
     Remove currency balance and/or raffle tickets from a member.
     """
     # Check if at least one parameter is provided
-    if starry_meal is None and fry_points is None:
+    if starry_meal is None and fry_points is None and burnt_fry_points is None:
         return await interaction.response.send_message(
-            "You must specify at least one of starry_meal, or fry_points to remove.",
+            "You must specify at least one of starry_meal, fry_points, or burnt_fry_points to remove.",
             ephemeral=True,
         )
 
@@ -172,14 +196,19 @@ async def remove_balance_func(
     if not current_balance_info:
         current_balance = 0
         current_fry_points = 0
+        current_burnt_fry_points = 0
     else:
         current_balance = current_balance_info.get("currency", 0)
         current_fry_points = (
             current_balance_info.get("fry_points", 0) if current_balance_info else 0
         )
+        current_burnt_fry_points = (
+            current_balance_info.get("burnt_fry_points", 0) if current_balance_info else 0
+        )
 
     updated_starry_meal = False
     updated_fry_points = False
+    updated_burnt_fry_points = False
     if starry_meal:
         new_balance = max(0, current_balance - starry_meal)
         await upsert_user_currency(
@@ -200,6 +229,16 @@ async def remove_balance_func(
         )
         updated_fry_points = True
 
+    if burnt_fry_points:
+        new_burnt_fry_points = max(0, current_burnt_fry_points - burnt_fry_points)
+        await upsert_user_burnt_fry_points(
+            bot=bot,
+            user_id=member.id,
+            user_name=member.name,
+            burnt_fry_points=new_burnt_fry_points,
+        )
+        updated_burnt_fry_points = True
+
     # Success embed
     description_parts = [f"**Member:** {member.mention}\n"]
     if updated_starry_meal:
@@ -212,6 +251,12 @@ async def remove_balance_func(
         description_parts.append(
             f"**Fry Points Removed:** {fry_points} {FRY_POINT_EMOJI}\n"
             f"**New Fry Points:** {new_fry_points} {FRY_POINT_EMOJI}"
+        )
+
+    if updated_burnt_fry_points:
+        description_parts.append(
+            f"**Burnt Fry Points Removed:** {burnt_fry_points} {BURNT_FRY_POINT_EMOJI}\n"
+            f"**New Burnt Fry Points:** {new_burnt_fry_points} {BURNT_FRY_POINT_EMOJI}"
         )
 
     desc = "\n".join(description_parts)
@@ -267,11 +312,14 @@ async def reset_all_balances_func(
         await reset_all_currency_only(bot=bot)
     elif scope == "fry points":
         await reset_all_fry_points_only(bot=bot)
+    elif scope == "burnt fry points":
+        await reset_all_burnt_fry_points_only(bot=bot)
     elif scope == "all":
         await reset_all_currency_and_fry_points(bot=bot)
+        await reset_all_burnt_fry_points_only(bot=bot)
     else:
         return await loader.error(
-            content=f"Unknown scope: `{scope}`. Use `starry meals`, `fry points`, or `all`."
+            content=f"Unknown scope: `{scope}`. Use `starry meals`, `fry points`, `burnt fry points`, or `all`."
         )
 
     # Sync cache to reflect the reset
@@ -337,9 +385,11 @@ async def view_balance_func(
     if not balance_info:
         balance = 0
         fry_points = 0
+        burnt_fry_points = 0
     else:
         balance = balance_info.get("currency", 0)
         fry_points = balance_info.get("fry_points", 0)
+        burnt_fry_points = balance_info.get("burnt_fry_points", 0)
     # Create embed
     embed = discord.Embed(
         title="Balance Info",
@@ -348,7 +398,8 @@ async def view_balance_func(
         description=(
             f"**Member:** {target_member.mention}\n"
             f"**Starry Meals:** {balance} {CURRENCY_EMOJI}\n"
-            f"**Fry Points:** {fry_points} {FRY_POINT_EMOJI}"
+            f"**Fry Points:** {fry_points} {FRY_POINT_EMOJI}\n"
+            f"**Burnt Fry Points:** {burnt_fry_points} {BURNT_FRY_POINT_EMOJI}"
         ),
     )
     embed.set_author(
