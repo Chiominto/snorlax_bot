@@ -130,8 +130,22 @@ utility_cache: dict[int, dict[str, str | dict[str, str]]] = {}
 #       ...
 #     }
 #   },
-
-
+# }
+# 🔮────────────────────────────────────────────
+#       ⚡ Server Shop Cache
+# 👻────────────────────────────────────────────
+server_shop_cache: dict[str, dict] = {}
+# Structure:
+# {
+#   item_id: {
+#       "item_name": str,
+#       "price": int,
+#       "stock": int,
+#       "description": str,
+#       "image_link": str,
+#       "dex": int | None,
+#   }
+# }
 
 # 🔮────────────────────────────────────────────
 #       ⚡ Snipe GA Wins Cache

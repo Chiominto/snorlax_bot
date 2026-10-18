@@ -1,7 +1,9 @@
 import discord
-from discord.ext import commands
 from discord import app_commands
-from constants.celestial_constants import CELESTIAL_ROLES, KHY_USER_ID
+from discord.ext import commands
+
+from constants.celestial_constants import (BURGER_USER_ID, CELESTIAL_ROLES,
+                                           HANA_USER_ID, KHY_USER_ID)
 from utils.logs.pretty_log import pretty_log
 
 
@@ -66,7 +68,7 @@ def is_staff_member(member: discord.Member) -> bool:
     """
     Checks if a member has any vna staff roles.
     """
-    staff_role_ids = [CELESTIAL_ROLES.staff, CELESTIAL_ROLES.clan_owner_, CELESTIAL_ROLES.co_owner, CELESTIAL_ROLES.aurora_aide_]
+    staff_role_ids = [CELESTIAL_ROLES.staff, CELESTIAL_ROLES.clan_owner_, CELESTIAL_ROLES.co_owner, CELESTIAL_ROLES.aurora_aide_, CELESTIAL_ROLES.hana_role]
     if any(role.id in staff_role_ids for role in member.roles):
         return True
     return False
@@ -77,3 +79,13 @@ def is_clan_member(interaction: discord.Interaction) -> bool:
     clan_roles = {CELESTIAL_ROLES.celestialnova_, CELESTIAL_ROLES.aurora_aide_}
     user_roles = {role.id for role in interaction.user.roles}
     return not clan_roles.isdisjoint(user_roles)
+
+
+def is_burger_shop_staff(interaction: discord.Interaction) -> bool:
+    """Check if the user is a staff member of the burger shop based on their user ID."""
+    burger_staff_user_ids = {
+        BURGER_USER_ID,
+        HANA_USER_ID,
+        KHY_USER_ID,
+    }
+    return interaction.user.id in burger_staff_user_ids

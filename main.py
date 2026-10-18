@@ -6,12 +6,12 @@ from discord import app_commands
 from discord.ext import commands, tasks
 from dotenv import load_dotenv
 
-from utils.cache.central_cache_loader import load_all_cache
-from utils.cache.cache_list import clear_processed_ids_cache
-from utils.db.get_pg_pool import get_pg_pool
-from utils.logs.pretty_log import pretty_log, set_bot
-from utils.functions.restore_views import restore_giveaway_views
 from utils.background_tasks.scheduled_task.scheduler import setup_scheduler
+from utils.cache.cache_list import clear_processed_ids_cache
+from utils.cache.central_cache_loader import load_all_cache
+from utils.db.get_pg_pool import get_pg_pool
+from utils.functions.restore_views import restore_giveaway_views
+from utils.logs.pretty_log import pretty_log, set_bot
 
 # ---- Intents / Bot ----
 intents = discord.Intents.default()
@@ -27,10 +27,8 @@ set_bot(bot)
 # ❀───────────────────────────────❀
 @bot.tree.error
 async def on_app_command_error(interaction, error):
-    from utils.functions.role_checks import (
-        OwnerCoownerCheckFailure,
-        StaffCheckFailure,
-    )
+    from utils.functions.role_checks import (OwnerCoownerCheckFailure,
+                                             StaffCheckFailure)
 
     if isinstance(error, OwnerCoownerCheckFailure):
         await interaction.response.send_message(str(error), ephemeral=True)
@@ -94,7 +92,7 @@ async def load_extensions():
                     )
     _loaded_count = len(loaded_cogs)
     pretty_log("ready", f"✅ Loaded { _loaded_count} cogs")
-    
+
     # Setup the scheduler after loading cogs
     await setup_scheduler(bot)
 
@@ -154,6 +152,10 @@ async def main():
             include_trace=True,
         )
         return  # Exit if DB connection fails
+
+    # Run database migrations
+    from utils.db.server_shop_db import run_migrations as run_shop_migrations
+    await run_shop_migrations(bot)
 
     load_dotenv()
     pretty_log("ready", "snorlax Bot is starting...")

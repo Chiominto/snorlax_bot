@@ -11,7 +11,7 @@ from utils.db.webhook_db_url import (
     upsert_webhook_url,
 )
 from utils.logs.pretty_log import pretty_log
-
+from constants.celestial_constants import CELESTIAL_TEXT_CHANNELS, CELESTIAL_SERVER_ID
 
 async def create_webhook_func(
     bot, channel: discord.TextChannel, name: str
@@ -169,3 +169,17 @@ async def send_webhook(
             label="🌐 WEBHOOK SEND",
         )
         await channel.send(content=content, embed=embed)
+
+async def send_webhook_log(
+    bot: discord.Client,
+    content: str = None,
+    embed: discord.Embed = None,
+):
+    guild = bot.get_guild(CELESTIAL_SERVER_ID)
+    log_channel = guild.get_channel(CELESTIAL_TEXT_CHANNELS.server_logs)
+    await send_webhook(
+        bot=bot,
+        channel=log_channel,
+        content=content,
+        embed=embed,
+    )

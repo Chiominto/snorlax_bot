@@ -5,8 +5,8 @@ CC_SERVER_ID = 1220718310455250996
 KHY_USER_ID = 952071312124313611
 BURGER_USER_ID = 682429434720288797
 CELESTIAL_SERVER_ID = 1490116594884411402
-
-
+HANA_USER_ID = 1219913658646401068
+BURGER_SHOP_STAFF = [KHY_USER_ID, BURGER_USER_ID, HANA_USER_ID]
 # 💦☁────────────────────────────────────────────💦☁
 #       CELESTIAL_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
@@ -75,6 +75,7 @@ class CELESTIAL_TEXT_CHANNELS:
     autospawn = 1491259323526021150
     founders_chat = 1490116595664683180
     giveaway_snipe = 1539199799926988870
+    burger_shop_log = 1557195673965957170
 
 
 # 💦☁────────────────────────────────────────────💦☁
@@ -174,6 +175,7 @@ class CELESTIAL_ROLES:
     elite_server_booster = 1491991752234631330
     top_catcher = 1491991867334594680
     fry_forsaken = 1548500724605001788
+    hana_role = 1507145472446300272
 
 
 # 💦☁────────────────────────────────────────────💦☁
@@ -183,3 +185,9 @@ class CELESTIAL_EMOJIS:
 
     lordfry = "<:LordFry:1490453099008102410>"
     burnt_fry = "<:Burnt_Fry_Box:1548296114392928346>"
+    Blue_Krabby = "<:Blue_Krabby:1556160431620493453>"
+    Green_Shucks = "<:Green_Shucks:1556160344593006653>"
+    Red_Sunflora = "<:Red_Sunflora:1556160393406324736>"
+    Celestial_Drampa = "<:Celestial_Drampa:1556906564533616640>"
+    Celstial_Scyther = "<:Celstial_Scyther:1556906501694554192>"
+    Celstial_Pyukumuku = "<:Celstial_Pyukumuku:1556906396656603168>"

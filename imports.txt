@@ -26,3 +26,5 @@ from constants.celestial_constants import (
 )
 
 from utils.cache.utilities_cache import phone_copy_description
+
+from utils.functions.get_pokemon_gifs import get_pokemon_gif

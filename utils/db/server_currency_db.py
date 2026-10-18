@@ -15,7 +15,45 @@ from utils.logs.pretty_log import pretty_log
     burnt_fry_points BIGINT DEFAULT 0,
 );
 """
+async def update_currency(
+    bot,
+    user_id,
+    currency: int,
+):
+    """Update a user's currency in the server_currency table."""
 
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            await conn.execute(
+                """
+                UPDATE server_currency
+                SET currency = $1
+                WHERE user_id = $2
+                """,
+                currency,
+                user_id,
+            )
+
+            pretty_log(
+                "db",
+                f"Updated currency for user ID {user_id} to {currency} in database.",
+                bot=bot,
+            )
+
+            # Update cache as well
+            from utils.cache.cache_list import server_currency_cache
+            if user_id in server_currency_cache:
+                server_currency_cache[user_id]["currency"] = currency
+
+            return True
+
+    except Exception as e:
+        pretty_log(
+            "error",
+            f"Failed to update balance for user ID {user_id}: {e}",
+            bot=bot,
+        )
+        return False
 
 async def get_all_people_with_most_fry_points(bot: discord.Client):
     """Fetch all users tied for the highest fry points."""
