@@ -8,6 +8,7 @@ from constants.celestial_constants import (
     CELESTIAL_SERVER_ID,
     CELESTIAL_TEXT_CHANNELS,
     KHY_USER_ID,
+    BURGER_USER_ID
 )
 from constants.server_currency import (
     BURNT_FRY_EMOJI,
@@ -69,6 +70,7 @@ curses_phrases = [
 
 
 async def handle_extra_meal_reward(bot: discord.Client, member: discord.Member):
+
     if not is_burger_shop_ongoing():
         return 0
 
@@ -148,12 +150,11 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
         extra_meal_str = ""
         fry_point_reward_str = f"> - The Fries God has granted you **1 {FRY_POINT_EMOJI}**! You now have **{new_fry_points} {FRY_POINT_EMOJI}**."
         phrase = random.choice(blessing_phrases)
-        content = f"{phrase}\n{fry_point_reward_str}"
         extra_points = await handle_extra_meal_reward(bot, user)
         if extra_points > 0:
-            new_fry_points += extra_points
             extra_meal_str = f"\n> - Bonus: You received **{extra_points} {CURRENCY_EMOJI}** for your efforts!"
             fry_point_reward_str += extra_meal_str
+        content = f"{phrase}\n{fry_point_reward_str}"
         embed = discord.Embed(
             title="A Blessing from the Fries God",
             description=content,
@@ -192,7 +193,7 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
         "info",
         f"User {user} prayed and received a {'blessing' if is_blessing else 'curse'}. Next pray available at <t:{cooldown_ends_on}:R>.",
     )
-    if user.id != KHY_USER_ID:  # Don't set cooldown for Khy for testing
+    if user.id != KHY_USER_ID:  # Don't set cooldown for Burger for testing
         await upsert_server_cooldown(
             bot, user.id, user.name, cooldown_type, cooldown_ends_on
         )

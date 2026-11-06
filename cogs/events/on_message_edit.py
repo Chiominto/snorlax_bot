@@ -71,10 +71,6 @@ class OnMessageEditCog(commands.Cog):
         # 🔧───────────────────────────────────────────────🔧
         if first_embed and first_embed_color not in LOW_RARITY_COLORS:
             if first_embed_description and "You caught" in first_embed_description:
-                pretty_log(
-                    "info",
-                    f"Detected edited message with rare catch embed in {after.channel.name}, processing...",
-                )
                 await handle_rarespawn_catch(
                     bot=self.bot,
                     before_message=before,
