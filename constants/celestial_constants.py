@@ -6,12 +6,13 @@ KHY_USER_ID = 952071312124313611
 BURGER_USER_ID = 682429434720288797
 CELESTIAL_SERVER_ID = 1490116594884411402
 HANA_USER_ID = 1219913658646401068
-BURGER_SHOP_STAFF = [KHY_USER_ID, BURGER_USER_ID, HANA_USER_ID]
+BURGER_SHOP_STAFF = [KHY_USER_ID, BURGER_USER_ID]
 # 💦☁────────────────────────────────────────────💦☁
 #       CELESTIAL_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
 class CELESTIAL_TEXT_CHANNELS:
     clan_annoucement = 1500473482872623195
+    quest_help = 1498151708008911008
 
     # 🌊💙🤍───────────── Admin ─────────────💙🤍🌊
     off_topic = 1492732522516189225

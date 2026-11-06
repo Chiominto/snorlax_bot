@@ -6,49 +6,56 @@ from zoneinfo import ZoneInfo
 import discord
 from discord.ext import commands
 
-from constants.celestial_constants import (BURGER_SHOP_STAFF, CELESTIAL_ROLES,
-                                           CELESTIAL_TEXT_CHANNELS)
-from constants.server_currency import (BALLOON_POP_IMAGE, CURRENCY_EMOJI,
-                                       CURRENCY_NAME, RAFFLE_TICKET_EMOJI,
-                                       SHOP_COLOR, balloon_emoji_map,
-                                       dart_balloon_map, dart_names)
+from constants.celestial_constants import (
+    BURGER_SHOP_STAFF,
+    CELESTIAL_ROLES,
+    CELESTIAL_TEXT_CHANNELS,
+)
+from constants.server_currency import (
+    BALLOON_POP_IMAGE,
+    CURRENCY_EMOJI,
+    CURRENCY_NAME,
+    RAFFLE_TICKET_EMOJI,
+    SHOP_COLOR,
+    balloon_emoji_map,
+    dart_balloon_map,
+    dart_names,
+)
 from utils.cache.cache_list import server_currency_cache, server_shop_cache
 from utils.cache.global_flags import TESTING_BURGER_SHOP_EVENT
-from utils.db.balloon_prizes_db import (fetch_balloon_prizes_by_balloon,
-                                        fetch_total_stock_for_balloon,
-                                        remove_balloon_prize,
-                                        update_balloon_prize_stock)
+from utils.db.balloon_prizes_db import (
+    fetch_balloon_prizes_by_balloon,
+    fetch_total_stock_for_balloon,
+    remove_balloon_prize,
+    update_balloon_prize_stock,
+)
 from utils.db.server_currency_db import update_currency
-from utils.db.server_shop_db import (format_item_name, remove_item, update_dex,
-                                     update_stock)
-from utils.functions.pokemon_func import (get_dex_number_by_name,
-                                          get_display_name)
+from utils.db.server_shop_db import (
+    format_item_name,
+    remove_item,
+    update_dex,
+    update_stock,
+)
+from utils.functions.burger_shop import (
+    is_burger_shop_ongoing,
+    is_user_id_burger_shop_staff,
+)
+from utils.functions.pokemon_func import get_dex_number_by_name, get_display_name
 from utils.functions.pretty_defer import pretty_defer
 from utils.functions.role_checks import is_burger_shop_staff
 from utils.functions.webhook_func import send_webhook, send_webhook_log
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
+from utils.functions.burger_shop import check_burger_shop
 
 processing_dart_purchase = set()  # To track users currently purchasing
 BOBA_USER_ID = 214920903887159296
 BOBA_CHANNEL = 1117651671594569818
-enable_debug(f"{__name__}.buy_item_func")
+
+"""enable_debug(f"{__name__}.buy_item_func")
 enable_debug(f"{__name__}.dart_purchase_handler")
 enable_debug(f"{__name__}.process_balloon_pop_embed")
-enable_debug(f"{__name__}.process_purchase")
-
-def is_event_ongoing() -> bool:
-    """
-    Returns True if the current date is between April 1st, 2026 12:00 AM EST and May 1st, 2026 12:00 AM EST.
-    """
-    now = datetime.now(ZoneInfo("America/New_York"))
-    event_start = datetime(2026, 4, 1, 0, 0, 0, tzinfo=ZoneInfo("America/New_York"))
-    event_end = datetime(2026, 4, 30, 0, 0, 0, tzinfo=ZoneInfo("America/New_York"))
-    return event_start <= now < event_end
-
-
-def is_user_id_burger_shop_staff(user_id):
-    return user_id in BURGER_SHOP_STAFF
+enable_debug(f"{__name__}.process_purchase")"""
 
 
 async def dart_purchase_handler(
@@ -57,13 +64,11 @@ async def dart_purchase_handler(
     dart_name: str,
     user: discord.Member,
     testing: bool = False,
-
 ):
     """Function to pop a balloon when a dart is purchased."""
     debug_log(
         f"Initiating dart purchase handler for dart '{dart_name}' with testing={testing}."
     )
-
 
     # Get balloon options based on dart type
     balloon_options = dart_balloon_map.get(dart_name.lower(), [])
@@ -221,7 +226,9 @@ async def process_balloon_pop_embed(
                 label="🎁 BOX PRIZE",
             )
             processing_dart_purchase.remove(dart_name)
-            error_message = f"⚠️ An error occurred while opening the box. Please try again later."
+            error_message = (
+                f"⚠️ An error occurred while opening the box. Please try again later."
+            )
             return False, None, None, error_message
 
         # Prepare description for the prize
@@ -461,7 +468,9 @@ async def process_purchase(
         debug_log(
             f"Not enough balance to buy {amount} {item_name}. User balance: {user_balance}, total price: {total_price}"
         )
-        processing_dart_purchase.discard(dart_name)  # Ensure dart is removed from processing set on failure
+        processing_dart_purchase.discard(
+            dart_name
+        )  # Ensure dart is removed from processing set on failure
         return (
             False,
             (
@@ -476,7 +485,6 @@ async def process_purchase(
     new_balance = user_balance - total_price
     debug_log(f"Updating user balance to {new_balance}")
     await update_currency(bot=bot, user_id=user.id, currency=new_balance)
-
 
     # --- Item Name Formatting ---
     item_name_fmt = format_item_name(item_name)
@@ -522,7 +530,6 @@ async def process_purchase(
     )
     embed.add_field(name="Amount", value=str(amount), inline=True)
 
-
     if stock >= 0:
         embed.add_field(name="Remaining Stock", value=str(new_stock), inline=True)
 
@@ -554,7 +561,6 @@ async def process_purchase(
         name="New Balance", value=f"{new_balance} {CURRENCY_EMOJI}", inline=True
     )
     log_embed.add_field(name="Remaining Stock", value=str(new_stock), inline=True)
-
 
     if is_dart and dart_description:
         log_embed.add_field(name="Balloon Prize", value=dart_description, inline=False)
@@ -621,19 +627,9 @@ async def buy_item_func(
     Buy an item from the server shop.
     """
 
-    # Allow staff to access any time, members only if Jan 1st or later
-    if not (is_shop_opened() or is_burger_shop_staff(interaction)):
-        return await interaction.response.send_message(
-            "The server shop is not yet open. Please wait for an update from the staff.",
-            ephemeral=True,
-        )
-
-    # Close shop after Feb 15th and later
-    if is_shop_closed() and not is_burger_shop_staff(interaction):
-        return await interaction.response.send_message(
-            "The server shop is currently closed. It will reopen at a later date. Please stay tuned for updates from the staff.",
-            ephemeral=True,
-        )
+    # Determine if shop is currently ongoing, only staff can bypass this check
+    if not await check_burger_shop(interaction):
+        return
 
     # Defer the interaction to allow more time for processing
     loader = await pretty_defer(
@@ -712,7 +708,6 @@ async def buy_item_func(
             dart_name=item_name,
             user=user,
             testing=TESTING_BURGER_SHOP_EVENT,
-
         )
         return
     else:

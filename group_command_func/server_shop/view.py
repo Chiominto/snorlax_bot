@@ -17,7 +17,7 @@ from utils.functions.pretty_defer import pretty_defer
 from utils.functions.role_checks import *
 from utils.functions.webhook_func import send_webhook_log
 from utils.logs.pretty_log import pretty_log
-
+from utils.functions.burger_shop import check_burger_shop
 from .buy import fetch_dex, is_shop_closed, is_shop_opened
 
 
@@ -132,18 +132,9 @@ async def shop_view_func(
     """
     View an item or the server shop.
     """
-    # Check if its jan 1st midnight or later, or if user is staff
-    if not (is_shop_opened() or is_staff_member(interaction.user)):
-        return await interaction.response.send_message(
-            "The server shop is not yet open. Please wait for an update from the staff.",
-            ephemeral=True,
-        )
-    # CLose shop after Feb 15th and later but allow staff
-    if is_shop_closed() and not is_staff_member(interaction.user):
-        return await interaction.response.send_message(
-            "The server shop is currently closed. It will reopen at a later date. Please stay tuned for updates from the staff.",
-            ephemeral=True,
-        )
+    # Determine if shop is currently ongoing, only staff can bypass this check
+    if not await check_burger_shop(interaction):
+        return
 
     try:
         item_str = "All items"

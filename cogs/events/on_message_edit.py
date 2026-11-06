@@ -2,13 +2,20 @@ import discord
 from discord.ext import commands
 
 from constants.celestial_constants import CC_SERVER_ID, POKEMEOW_APPLICATION_ID
+from utils.functions.burger_shop import check_burger_shop
+from utils.listener_func.rarespawn_listener import handle_rarespawn_catch
 from utils.logs.pretty_log import pretty_log
-
+from constants.paldea_galar_dict import rarity_meta
 triggers = {
     "icon_unlock": "as your icon with `/battle set-icon",
 }
-
-
+FISHING_COLOR = 8900346
+LOW_RARITY_COLORS = [
+    rarity_meta["rare"]["color"],
+    rarity_meta["superrare"]["color"],
+    rarity_meta["common"]["color"],
+    rarity_meta["uncommon"]["color"],
+]
 # 🟣────────────────────────────────────────────
 #         💤 Message Edit Listener Cog
 # 🟣────────────────────────────────────────────
@@ -46,6 +53,7 @@ class OnMessageEditCog(commands.Cog):
         first_embed_title = (
             first_embed.title if first_embed and first_embed.title else ""
         )
+        first_embed_color = first_embed.color.value if first_embed and first_embed.color else None
 
         # ————————————————————————————————
         # 🏰 Ignore non-PokéMeow bot messages
@@ -58,6 +66,20 @@ class OnMessageEditCog(commands.Cog):
         ):
             return
 
+        # 🔧───────────────────────────────────────────────🔧
+        # 🔧    Rarespawn Handler
+        # 🔧───────────────────────────────────────────────🔧
+        if first_embed and first_embed_color not in LOW_RARITY_COLORS:
+            if first_embed_description and "You caught" in first_embed_description:
+                pretty_log(
+                    "info",
+                    f"Detected edited message with rare catch embed in {after.channel.name}, processing...",
+                )
+                await handle_rarespawn_catch(
+                    bot=self.bot,
+                    before_message=before,
+                    after_message=after,
+                )
 
 # 🟣────────────────────────────────────────────
 #         💤 Setup Function

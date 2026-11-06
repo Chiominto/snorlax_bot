@@ -4,9 +4,11 @@ from utils.logs.pretty_log import pretty_log
 # 🍩────────────────────────────────────────────
 processed_market_feed_message_ids = set()
 processed_snipe_ids = set()
+processed_rare_catches = set()
 LIST_OF_PROCESSED_IDS = [
     processed_market_feed_message_ids,
     processed_snipe_ids,
+    processed_rare_catches,
 ]
 def clear_processed_ids_cache():
     for id_set in LIST_OF_PROCESSED_IDS:

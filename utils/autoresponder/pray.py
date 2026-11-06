@@ -3,18 +3,34 @@ import random
 import discord
 
 from constants.aesthetics import Thumbnails
-from constants.celestial_constants import (CELESTIAL_ROLES,
-                                           CELESTIAL_SERVER_ID,
-                                           CELESTIAL_TEXT_CHANNELS,
-                                           KHY_USER_ID)
-from constants.server_currency import FRY_POINT_EMOJI, BURNT_FRY_EMOJI
-from utils.db.server_cooldowns_db import (fetch_user_server_cooldown_for_type,
-                                          upsert_server_cooldown)
-from utils.db.server_currency_db import (fetch_burnt_fry_points,
-                                         fetch_fry_points,
-                                         upsert_user_burnt_fry_points,
-                                         upsert_user_fry_points)
+from constants.celestial_constants import (
+    CELESTIAL_ROLES,
+    CELESTIAL_SERVER_ID,
+    CELESTIAL_TEXT_CHANNELS,
+    KHY_USER_ID,
+)
+from constants.server_currency import (
+    BURNT_FRY_EMOJI,
+    CURRENCY_EMOJI,
+    CURRENCY_NAME,
+    FRY_POINT_EMOJI,
+)
+from utils.cache.cache_list import server_currency_cache
+from utils.db.server_cooldowns_db import (
+    fetch_user_server_cooldown_for_type,
+    upsert_server_cooldown,
+)
+from utils.db.server_currency_db import (
+    fetch_burnt_fry_points,
+    fetch_fry_points,
+    update_currency,
+    upsert_server_currency,
+    upsert_user_burnt_fry_points,
+    upsert_user_fry_points,
+    user_exists_in_server_currency,
+)
 from utils.logs.pretty_log import pretty_log
+from utils.functions.burger_shop import is_burger_shop_ongoing
 
 # 1day in seconds
 PRAY_COOLDOWN = 24 * 60 * 60
@@ -52,6 +68,46 @@ curses_phrases = [
 ]
 
 
+async def handle_extra_meal_reward(bot: discord.Client, member: discord.Member):
+    if not is_burger_shop_ongoing():
+        return 0
+
+    if random.random() >= 0.2:
+        return 0
+
+    guild = bot.get_guild(CELESTIAL_SERVER_ID)
+    top_catcher = guild.get_role(CELESTIAL_ROLES.top_catcher)
+    server_booster = guild.get_role(CELESTIAL_ROLES.server_booster)
+
+    if top_catcher in member.roles or server_booster in member.roles:
+        points = 2
+    else:
+        points = 1
+
+    user_currency_info = server_currency_cache.get(member.id)
+    if not user_currency_info:
+        from utils.cache.server_currency_cache import load_server_currency_cache
+        await load_server_currency_cache(bot)
+        user_currency_info = server_currency_cache.get(member.id)
+
+    if user_currency_info:
+        current_balance = user_currency_info.get("currency", 0)
+        new_balance = current_balance + points
+        await update_currency(
+            bot=bot,
+            user_id=member.id,
+            currency=new_balance,
+        )
+    else:
+        await upsert_server_currency(
+            bot=bot,
+            user_id=member.id,
+            user_name=member.name,
+            currency=points,
+        )
+    return points
+
+
 async def handle_pray_autoresponder(bot, message: discord.Message):
     """Handles the !pray autoresponder."""
     user = message.author
@@ -79,7 +135,8 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
     if golden_fry_disciple in user.roles:
         chance = 0.4  # Golden Fry Disciple has 40% blessing chance
     # No cooldown, proceed with blessing or curse
-    if random.random() < chance:
+    is_blessing = random.random() < chance
+    if is_blessing:
         # Blessing
 
         fry_points = await fetch_fry_points(bot, user.id)
@@ -88,9 +145,15 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
         else:
             new_fry_points = fry_points + 1
 
+        extra_meal_str = ""
         fry_point_reward_str = f"> - The Fries God has granted you **1 {FRY_POINT_EMOJI}**! You now have **{new_fry_points} {FRY_POINT_EMOJI}**."
         phrase = random.choice(blessing_phrases)
         content = f"{phrase}\n{fry_point_reward_str}"
+        extra_points = await handle_extra_meal_reward(bot, user)
+        if extra_points > 0:
+            new_fry_points += extra_points
+            extra_meal_str = f"\n> - Bonus: You received **{extra_points} {CURRENCY_EMOJI}** for your efforts!"
+            fry_point_reward_str += extra_meal_str
         embed = discord.Embed(
             title="A Blessing from the Fries God",
             description=content,
@@ -99,6 +162,7 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
         embed.set_thumbnail(url=Thumbnails.fries_shrine)
         embed.set_author(name=user.display_name, icon_url=user.display_avatar.url)
         await upsert_user_fry_points(bot, user.id, user.name, new_fry_points)
+
         await message.reply(embed=embed)
 
     else:
@@ -108,7 +172,9 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
             new_burnt_fry_points = 1
         else:
             new_burnt_fry_points = burnt_fry_points + 1
-        await upsert_user_burnt_fry_points(bot, user.id, user.name, new_burnt_fry_points)
+        await upsert_user_burnt_fry_points(
+            bot, user.id, user.name, new_burnt_fry_points
+        )
         burnt_fry_point_reward_str = f"> - The Fries God has cursed you with **1 {BURNT_FRY_EMOJI}**! You now have **{new_burnt_fry_points} {BURNT_FRY_EMOJI}**."
         phrase = random.choice(curses_phrases)
         content = f"{phrase}\n{burnt_fry_point_reward_str}"
@@ -124,7 +190,7 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
     cooldown_ends_on = get_next_12am_est_unix()
     pretty_log(
         "info",
-        f"User {user} prayed and received a {'blessing' if 'granted' in content else 'curse'}. Next pray available at <t:{cooldown_ends_on}:R>.",
+        f"User {user} prayed and received a {'blessing' if is_blessing else 'curse'}. Next pray available at <t:{cooldown_ends_on}:R>.",
     )
     if user.id != KHY_USER_ID:  # Don't set cooldown for Khy for testing
         await upsert_server_cooldown(

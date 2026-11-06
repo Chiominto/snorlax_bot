@@ -85,7 +85,6 @@ def is_burger_shop_staff(interaction: discord.Interaction) -> bool:
     """Check if the user is a staff member of the burger shop based on their user ID."""
     burger_staff_user_ids = {
         BURGER_USER_ID,
-        HANA_USER_ID,
         KHY_USER_ID,
     }
     return interaction.user.id in burger_staff_user_ids

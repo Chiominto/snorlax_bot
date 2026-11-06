@@ -9,6 +9,7 @@ from constants.celestial_constants import (
 )
 from utils.autoresponder.pray import handle_pray_autoresponder
 from utils.functions.market_feed_listener import process_market_feed_message
+from utils.listener_func import quest_helper_listener
 from utils.listener_func.autospawn_listener import as_spawn_ping
 from utils.logs.pretty_log import pretty_log
 
@@ -102,6 +103,22 @@ class MessageCreateListener(commands.Cog):
                 tag="info",
             )
             await as_spawn_ping(self.bot, message)
+
+        # 🔧───────────────────────────────────────────────🔧
+        # 🔧 Quest Helper Reward
+        # 🔧───────────────────────────────────────────────🔧
+        if (
+            message.content
+            and "completed the quest" in message.content
+            and "Receive 1" in message.content
+            and "from another player" in message.content
+        ):
+            pretty_log(
+                "info",
+                f"Detected quest completion message for quest helper reward: Message ID {message.id}",
+                label="Quest Helper Listener",
+            )
+            await quest_helper_listener(bot=self.bot, message=message)
 
 
 # 🟣────────────────────────────────────────────
