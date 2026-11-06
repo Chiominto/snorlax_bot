@@ -21,7 +21,7 @@ from utils.db.server_currency_db import (
     user_exists_in_server_currency,
 )
 
-from utils.functions.pokemeow_reply import get_pokemeow_reply_member
+from utils.functions.pokemeow_reply import get_pokemeow_reply_member, get_pokemeow_reply_two
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.functions.webhook_func import send_webhook_log
 from utils.functions.burger_shop import is_burger_shop_ongoing
@@ -42,7 +42,7 @@ async def quest_helper_listener(
     if not is_burger_shop_ongoing():
         return
 
-    member = await get_pokemeow_reply_member(message)
+    member = await get_pokemeow_reply_two(message)
     if not member:
         return
 
@@ -70,7 +70,6 @@ async def quest_helper_listener(
         user_currency_info = server_currency_cache.get(member_id)
         if not user_currency_info:
             # Double-check DB if not in cache
-
 
             user_exists = await user_exists_in_server_currency(bot, member_id)
             if user_exists:

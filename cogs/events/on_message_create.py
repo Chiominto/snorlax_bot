@@ -121,18 +121,19 @@ class MessageCreateListener(commands.Cog):
         # 🔧───────────────────────────────────────────────🔧
         # 🔧 Quest Helper Reward
         # 🔧───────────────────────────────────────────────🔧
-        if (
-            message.content
-            and "completed the quest" in message.content
-            and "Receive 1" in message.content
-            and "from another player" in message.content
-        ):
-            pretty_log(
-                "info",
-                f"Detected quest completion message for quest helper reward: Message ID {message.id}",
-                label="Quest Helper Listener",
-            )
-            await quest_helper_listener(bot=self.bot, message=message)
+        if first_embed and first_embed_description:
+            if (
+                first_embed_description
+                and "completed the quest" in first_embed_description
+                and "Receive 1" in first_embed_description
+                and "from another player" in first_embed_description
+            ):
+                pretty_log(
+                    "info",
+                    f"Detected quest completion message for quest helper reward: Message ID {message.id}",
+                    label="Quest Helper Listener",
+                )
+                await quest_helper_listener(bot=self.bot, message=message)
 
         # ————————————————————————————————
         # 🩵 DEX LISTENER
