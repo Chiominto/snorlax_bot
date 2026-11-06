@@ -5,6 +5,7 @@ from constants.celestial_constants import CC_SERVER_ID, POKEMEOW_APPLICATION_ID
 from utils.functions.burger_shop import check_burger_shop
 from utils.listener_func.rarespawn_listener import handle_rarespawn_catch
 from utils.logs.pretty_log import pretty_log
+from utils.listener_func.dex_listener import dex_listener
 from constants.paldea_galar_dict import rarity_meta
 triggers = {
     "icon_unlock": "as your icon with `/battle set-icon",
@@ -16,6 +17,21 @@ LOW_RARITY_COLORS = [
     rarity_meta["common"]["color"],
     rarity_meta["uncommon"]["color"],
 ]
+
+
+def embed_has_field_name(embed, name_to_match: str) -> bool:
+    """
+    Returns True if any field name in the embed matches the given string.
+    Returns False immediately if the embed has no fields.
+    """
+    if not hasattr(embed, "fields") or not embed.fields:
+        return False
+    for field in embed.fields:
+        if field.name == name_to_match:
+            return True
+    return False
+
+
 # 🟣────────────────────────────────────────────
 #         💤 Message Edit Listener Cog
 # 🟣────────────────────────────────────────────
@@ -76,6 +92,17 @@ class OnMessageEditCog(commands.Cog):
                     before_message=before,
                     after_message=after,
                 )
+
+        # ————————————————————————————————
+        # 🩵 DEX LISTENER
+        # ————————————————————————————————
+        if first_embed:
+            if embed_has_field_name(first_embed, "Dex Number"):
+                pretty_log(
+                    "info",
+                    f"Detected dex command embed with 'Dex Number' field. Triggering dex listener.",
+                )
+                await dex_listener(self.bot, after)
 
 # 🟣────────────────────────────────────────────
 #         💤 Setup Function

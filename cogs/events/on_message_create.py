@@ -12,6 +12,7 @@ from utils.functions.market_feed_listener import process_market_feed_message
 from utils.listener_func import quest_helper_listener
 from utils.listener_func.autospawn_listener import as_spawn_ping
 from utils.logs.pretty_log import pretty_log
+from utils.listener_func.dex_listener import dex_listener
 
 MARKET_FEED_CHANNELS = {
     CELESTIAL_TEXT_CHANNELS.curs_feed,
@@ -19,6 +20,19 @@ MARKET_FEED_CHANNELS = {
     CELESTIAL_TEXT_CHANNELS.golden_feed,
     CELESTIAL_TEXT_CHANNELS.legendmegagmax_feed,
 }
+
+
+def embed_has_field_name(embed, name_to_match: str) -> bool:
+    """
+    Returns True if any field name in the embed matches the given string.
+    Returns False immediately if the embed has no fields.
+    """
+    if not hasattr(embed, "fields") or not embed.fields:
+        return False
+    for field in embed.fields:
+        if field.name == name_to_match:
+            return True
+    return False
 
 
 # 🟣────────────────────────────────────────────
@@ -120,7 +134,16 @@ class MessageCreateListener(commands.Cog):
             )
             await quest_helper_listener(bot=self.bot, message=message)
 
-
+        # ————————————————————————————————
+        # 🩵 DEX LISTENER
+        # ————————————————————————————————
+        if first_embed:
+            if embed_has_field_name(first_embed, "Dex Number"):
+                pretty_log(
+                    "info",
+                    f"Detected dex command embed with 'Dex Number' field. Triggering dex listener.",
+                )
+                await dex_listener(self.bot, message)
 # 🟣────────────────────────────────────────────
 #         💤 Setup Function
 # 🟣────────────────────────────────────────────

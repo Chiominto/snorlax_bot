@@ -226,6 +226,7 @@ def update_market_value_in_cache(
 ):
     # Normalize key to lowercase for case-insensitive handling
     key = pokemon_name.lower()
+    is_new_pokemon = key not in pokemon_cache
 
     if key in pokemon_cache:
         pokemon_cache[key].update(
@@ -244,10 +245,27 @@ def update_market_value_in_cache(
             f"✅ Updated market value for Pokémon '{pokemon_name}' in cache.",
         )
     else:
+        pokemon_cache[key] = {
+            "pokemon_name": pokemon_name,
+            "dex_number": dex_number,
+            "lowest_market": lowest_market,
+            "current_listing": current_listing,
+            "true_lowest": true_lowest,
+            "listing_seen": listing_seen,
+            "image_link": image_link,
+            "rarity": rarity,
+        }
+        is_new_pokemon = True
         pretty_log(
             "cache",
-            f"⚠️ Pokémon '{pokemon_name}' not found in cache to update market value.",
+            f"✅ Added new Pokémon '{pokemon_name}' to cache.",
         )
+
+    # If this is a new Pokémon, rebuild autocomplete index
+    if is_new_pokemon:
+        pokemon_list_cache[key] = dex_number
+        rebuild_pokemon_autocomplete_index()
+        debug_log(f"Autocomplete index rebuilt after adding new Pokémon: {pokemon_name}")
 
 
 # 🍩────────────────────────────────────────────

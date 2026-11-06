@@ -192,3 +192,4 @@ async def update_emoji_id(bot: discord, pokemon_name: str, emoji_id: str):
             message=f"❌ Error updating emoji ID for Pokémon '{pokemon_name}' in database: {e}",
             tag="db",
         )
+
