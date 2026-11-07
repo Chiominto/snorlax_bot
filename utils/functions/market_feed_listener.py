@@ -169,15 +169,13 @@ async def handle_market_alert(
         inline=True,
     )
     alert_embed.add_field(name="Amount", value=amount, inline=True)
-    if isinstance(lowest_market, int):
+    if lowest_market is not None and isinstance(lowest_market, int):
         lowest_market_display = f"{Emojis.pokecoin} {lowest_market:,}"
-    else:
-        lowest_market_display = f"{Emojis.pokecoin} {lowest_market}"
-    alert_embed.add_field(
-        name="Lowest Market",
-        value=lowest_market_display,
-        inline=True,
-    )
+        alert_embed.add_field(
+            name="Lowest Market",
+            value=lowest_market_display,
+            inline=True,
+        )
     alert_embed.add_field(
         name="Listing Seen",
         value=listing_seen,
@@ -216,14 +214,14 @@ async def snipe_handler(
     poke_name: str,
     listed_price: int,
     id: str,
-    lowest_market: int,
+    monthly_average: int,
     amount: int,
     listing_seen: str,
     message: discord.Message,
     embed: discord.Embed,
 ):
     debug_log(
-        f"snipe_handler called for {poke_name} id={id} listed_price={listed_price} lowest_market={lowest_market}"
+        f"snipe_handler called for {poke_name} id={id} listed_price={listed_price} monthly_average={monthly_average}"
     )
     DEFAULT_COLOR = 0x0855FB
     embed_color = None
@@ -285,12 +283,12 @@ async def snipe_handler(
 
             debug_log(f"content for snipe alert: {content}")
             # Check if lowest market is int or "?"
-            if isinstance(lowest_market, int):
-                lowest_market_str = f"{PokeCoin} {lowest_market:,}"
+            if isinstance(monthly_average, int):
+                monthly_average_str = f"{PokeCoin} {monthly_average:,}"
             else:
-                lowest_market_str = f"{PokeCoin} {lowest_market}"
+                monthly_average_str = f"{PokeCoin} {monthly_average}"
 
-            debug_log(f"lowest_market_str resolved to {lowest_market_str}")
+            debug_log(f"monthly_average_str resolved to {monthly_average_str}")
             # Build embed
             snipe_embed = Embed(color=embed_color)
             if embed.thumbnail:
@@ -309,8 +307,9 @@ async def snipe_handler(
                 name="Listed Price", value=f"{PokeCoin} {listed_price:,}", inline=True
             )
             snipe_embed.add_field(name="Amount", value=amount, inline=True)
+
             snipe_embed.add_field(
-                name="Lowest Market", value=lowest_market_str, inline=True
+                name="Monthly Average", value=monthly_average_str, inline=True
             )
             snipe_embed.add_field(name="Listing Seen", value=listing_seen, inline=True)
             snipe_embed.set_footer(
@@ -385,18 +384,18 @@ async def process_market_feed_message(
         if listed_price == 0:
             debug_log(f"Skipping embed: listed_price is 0 for {poke_name}")
             continue
-        lowest_market_str = re.sub(
-            r"<a?:\w+:\d+>", "", fields.get("Lowest Market", "0")
+        monthly_average_str = re.sub(
+            r"<a?:\w+:\d+>", "", fields.get("Monthly Average", "0")
         )
-        lowest_market_match = re.search(r"(\d[\d,]*)", lowest_market_str)
-        if lowest_market_match:
-            lowest_market = int(lowest_market_match.group(1).replace(",", ""))
-            if lowest_market == 0:
-                debug_log(f"Skipping embed: lowest_market is 0 for {poke_name}")
+        monthly_average_match = re.search(r"(\d[\d,]*)", monthly_average_str)
+        if monthly_average_match:
+            monthly_average = int(monthly_average_match.group(1).replace(",", ""))
+            if monthly_average == 0:
+                debug_log(f"Skipping embed: monthly_average is 0 for {poke_name}")
                 continue
         else:
             # No digits found — treat as unknown ("?")
-            lowest_market = "?"
+            monthly_average = "?"
         listing_seen = fields.get("Listing Seen", "N/A")
         amount = fields.get("Amount", "1")
         embed_color = embed.color.value
@@ -408,16 +407,16 @@ async def process_market_feed_message(
         # Snipe detection: only process unprocessed IDs
         if original_id not in processed_snipe_ids:
             processed_snipe_ids.add(original_id)
-            if lowest_market > 0 and listed_price <= lowest_market * 0.7:
+            if monthly_average != "?" and monthly_average > 0 and listed_price <= monthly_average * 0.7:
                 debug_log(
-                    f"Snipe detected for {poke_name} #{poke_dex}: listed_price={listed_price}, lowest_market={lowest_market}"
+                    f"Snipe detected for {poke_name} #{poke_dex}: listed_price={listed_price}, monthly_average={monthly_average}"
                 )
                 await snipe_handler(
                     bot,
                     poke_name,
                     listed_price,
                     original_id,
-                    lowest_market,
+                    monthly_average,
                     amount,
                     listing_seen,
                     message,
@@ -492,13 +491,24 @@ async def process_market_feed_message(
         )
         debug_log(f"Determined market value rarity: {market_value_rarity}")
         poke_dex = int(poke_dex)
+        
+        # Handle "Lowest Market" field (may not exist in newer embeds)
         lowest_market_str = re.sub(
-            r"<a?:\w+:\d+>", "", fields.get("Lowest Market", "0")
+            r"<a?:\w+:\d+>", "", fields.get("Lowest Market", "")
         )
-        lowest_market_match = re.search(r"(\d[\d,]*)", lowest_market_str)
+        lowest_market_match = re.search(r"(\d[\d,]*)", lowest_market_str) if lowest_market_str else None
         lowest_market = (
             int(lowest_market_match.group(1).replace(",", ""))
             if lowest_market_match
+            else None
+        )
+        monthly_average_str = re.sub(
+            r"<a?:\w+:\d+>", "", fields.get("Monthly Average", "0")
+        )
+        monthly_average_match = re.search(r"(\d[\d,]*)", monthly_average_str)
+        monthly_average = (
+            int(monthly_average_match.group(1).replace(",", ""))
+            if monthly_average_match
             else 0
         )
 
@@ -507,6 +517,7 @@ async def process_market_feed_message(
         listing_seen_match = re.search(r"<t:(\d+):", listing_seen)
         if listing_seen_match:
             listing_seen = int(listing_seen_match.group(1))
+
 
         # Upsert into market value cache
         cache_key = poke_name.lower()
@@ -532,21 +543,12 @@ async def process_market_feed_message(
             else:
                 true_lowest = 0
 
-        # Only update DB if any value has changed
-        cache_update = {
-            "pokemon": poke_name,
-            "dex_number": poke_dex,
-            "lowest_market": lowest_market,
-            "current_listing": listed_price,
-            "true_lowest": true_lowest,
-            "listing_seen": listing_seen,
-            "image_link": thumbnail_url,
-            "rarity": market_value_rarity,
-        }
+        # Only update DB and cache if any value has changed
         prev = pokemon_cache.get(cache_key, {})
         needs_update = (
             prev.get("lowest_market") != lowest_market
             or prev.get("current_listing") != listed_price
+            or prev.get("monthly_average") != monthly_average
             or prev.get("true_lowest") != true_lowest
             or prev.get("listing_seen") != listing_seen
             or prev.get("dex_number") != poke_dex
@@ -554,7 +556,6 @@ async def process_market_feed_message(
             or prev.get("rarity") != market_value_rarity
         )
 
-        pokemon_cache[cache_key] = cache_update
         if needs_update:
             await update_market_value(
                 bot=bot,
@@ -566,6 +567,7 @@ async def process_market_feed_message(
                 listing_seen=str(listing_seen),
                 image_link=thumbnail_url,
                 rarity=market_value_rarity,
+                monthly_average=monthly_average,
             )
             pretty_log(
                 "market_value",

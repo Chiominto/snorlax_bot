@@ -217,12 +217,13 @@ def check_pokemon_in_cache(pokemon_name: str) -> bool:
 def update_market_value_in_cache(
     pokemon_name: str,
     dex_number: int,
-    lowest_market: int,
+    lowest_market: int | None,
     current_listing: int,
     true_lowest: int,
     listing_seen: str,
     image_link: str,
     rarity: str,
+    monthly_average: int,
 ):
     # Normalize key to lowercase for case-insensitive handling
     key = pokemon_name.lower()
@@ -238,6 +239,7 @@ def update_market_value_in_cache(
                 "listing_seen": listing_seen,
                 "image_link": image_link,
                 "rarity": rarity,
+                "monthly_average": monthly_average,
             }
         )
         pretty_log(
@@ -254,6 +256,7 @@ def update_market_value_in_cache(
             "listing_seen": listing_seen,
             "image_link": image_link,
             "rarity": rarity,
+            "monthly_average": monthly_average,
         }
         is_new_pokemon = True
         pretty_log(
@@ -311,6 +314,16 @@ def fetch_image_link_cache(pokemon_name: str) -> str | None:
     pretty_log(
         "cache",
         f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch image link.",
+    )
+    return None
+
+def fetch_monthly_average_cache(pokemon_name: str) -> int | None:
+    key = pokemon_name.lower()
+    if key in pokemon_cache:
+        return pokemon_cache[key].get("monthly_average")
+    pretty_log(
+        "cache",
+        f"⚠️ Pokémon '{pokemon_name}' not found in cache to fetch monthly average.",
     )
     return None
 

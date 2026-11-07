@@ -15,6 +15,7 @@ from utils.logs.pretty_log import pretty_log
     listing_seen TEXT,
     emoji_id TEXT,
     image_link TEXT,
+    monthly_average BIGINT,
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );"""
 
@@ -30,13 +31,14 @@ async def upsert_pokemon_db(
     listing_seen: str,
     emoji_id: str,
     image_link: str,
+    monthly_average: int,
 ):
     try:
         async with bot.pg_pool.acquire() as conn:
             await conn.execute(
                 """
-                INSERT INTO pokemons (pokemon_name, dex_number, rarity, current_listing, lowest_market, true_lowest, listing_seen, emoji_id, image_link)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                INSERT INTO pokemons (pokemon_name, dex_number, rarity, current_listing, lowest_market, true_lowest, listing_seen, emoji_id, image_link, monthly_average)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 ON CONFLICT (pokemon_name) DO UPDATE SET
                     dex_number = EXCLUDED.dex_number,
                     rarity = EXCLUDED.rarity,
@@ -46,6 +48,7 @@ async def upsert_pokemon_db(
                     listing_seen = EXCLUDED.listing_seen,
                     emoji_id = EXCLUDED.emoji_id,
                     image_link = EXCLUDED.image_link,
+                    monthly_average = EXCLUDED.monthly_average,
                     last_updated = CURRENT_TIMESTAMP;
                 """,
                 pokemon_name.lower(),
@@ -57,6 +60,7 @@ async def upsert_pokemon_db(
                 listing_seen,
                 emoji_id,
                 image_link,
+                monthly_average,
             )
         pretty_log(
             message=f"✅ Upserted Pokémon '{pokemon_name}' into database.",
@@ -73,12 +77,13 @@ async def update_market_value(
     bot: discord.Client,
     pokemon_name: str,
     dex_number: int,
-    lowest_market: int = 0,
+    lowest_market: int | None = None,
     current_listing: int = 0,
     true_lowest: int = 0,
     listing_seen: str | None = None,
     image_link: str = None,
     rarity: str = "unknown",
+    monthly_average: int = 0,
 ):
     """
     Insert or update market value data for a Pokémon.
@@ -90,9 +95,9 @@ async def update_market_value(
                 """
                     INSERT INTO pokemons (
                         pokemon_name, dex_number, lowest_market,
-                        current_listing, true_lowest, listing_seen, image_link, last_updated, rarity
+                        current_listing, true_lowest, listing_seen, image_link, last_updated, rarity, monthly_average
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                     ON CONFLICT (pokemon_name) DO UPDATE SET
                         dex_number = $2,
                         lowest_market = $3,
@@ -101,7 +106,8 @@ async def update_market_value(
                         listing_seen = COALESCE($6, pokemons.listing_seen),
                         image_link = COALESCE($7, pokemons.image_link),
                         last_updated = $8,
-                        rarity = COALESCE($9, pokemons.rarity)
+                        rarity = COALESCE($9, pokemons.rarity),
+                        monthly_average = COALESCE($10, pokemons.monthly_average)
                     """,
                 pokemon_name.lower(),
                 dex_number,
@@ -112,6 +118,7 @@ async def update_market_value(
                 image_link,
                 datetime.now(),
                 rarity,
+                monthly_average,
             )
         pretty_log(
             message=f"✅ Updated market value for Pokémon '{pokemon_name}' in database.",
@@ -130,6 +137,7 @@ async def update_market_value(
             listing_seen=listing_seen,
             image_link=image_link,
             rarity=rarity,
+            monthly_average=monthly_average,
         )
     except Exception as e:
         pretty_log(
@@ -153,6 +161,7 @@ async def fetch_all_pokemons(bot: discord.Client):
                     "listing_seen": row["listing_seen"],
                     "emoji_id": row["emoji_id"],
                     "image_link": row["image_link"],
+                    "monthly_average": row["monthly_average"],
                     "last_updated": row.get("last_updated"),
                 }
                 for row in rows
