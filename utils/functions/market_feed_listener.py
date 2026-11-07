@@ -87,7 +87,7 @@ async def handle_market_alert(
     channel_id: int,
     ping: bool,
     amount: int,
-    lowest_market: int,
+    monthly_average: int,
     listing_seen: str,
     embed: discord.Embed,
 ):
@@ -169,11 +169,11 @@ async def handle_market_alert(
         inline=True,
     )
     alert_embed.add_field(name="Amount", value=amount, inline=True)
-    if lowest_market is not None and isinstance(lowest_market, int):
-        lowest_market_display = f"{Emojis.pokecoin} {lowest_market:,}"
+    if monthly_average is not None and isinstance(monthly_average, int):
+        monthly_average_display = f"{Emojis.pokecoin} {monthly_average:,}"
         alert_embed.add_field(
-            name="Lowest Market",
-            value=lowest_market_display,
+            name="Monthly Average",
+            value=monthly_average_display,
             inline=True,
         )
     alert_embed.add_field(
@@ -468,7 +468,7 @@ async def process_market_feed_message(
                         channel_id=channel_id,
                         ping=ping,
                         amount=amount,
-                        lowest_market=lowest_market,
+                        monthly_average=monthly_average,
                         listing_seen=listing_seen,
                         embed=embed,
                     )
@@ -491,7 +491,7 @@ async def process_market_feed_message(
         )
         debug_log(f"Determined market value rarity: {market_value_rarity}")
         poke_dex = int(poke_dex)
-        
+
         # Handle "Lowest Market" field (may not exist in newer embeds)
         lowest_market_str = re.sub(
             r"<a?:\w+:\d+>", "", fields.get("Lowest Market", "")
