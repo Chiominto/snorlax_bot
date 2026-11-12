@@ -67,7 +67,7 @@ class Shop_Paginator(View):
         end = start + self.per_page
         page_items = self.items[start:end]
 
-        title = "Infusion Server Shop"
+        title = "Burger Shop"
         embed = discord.Embed(
             title=title,
             color=SHOP_COLOR,
@@ -188,7 +188,7 @@ async def shop_view_func(
             if description:
                 description_str = f"> - **Description:** {description}\n"
             embed = discord.Embed(
-                title=f"Infusion Server Shop",
+                title=f"Burger Shop",
                 color=SHOP_COLOR,
                 description=(
                     f"**Name:** {item_name}\n"
