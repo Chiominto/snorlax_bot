@@ -194,7 +194,7 @@ async def list_item_func(
             else ""
         )
         mega_mons_str = (
-            f"{Emojis.Mega}" + (", ".join(categories["mega"]))
+            f"{Emojis.mega}" + (", ".join(categories["mega"]))
             if categories["mega"]
             else ""
         )
