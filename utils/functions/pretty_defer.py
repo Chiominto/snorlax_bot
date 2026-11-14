@@ -63,7 +63,7 @@ async def pretty_defer(
                             else content
                         ),
                         embed=embed,
-                        view=view,
+                        **({"view": view} if view is not None else {}),
                         ephemeral=self.ephemeral,
                     )
                     self.message = msg
@@ -155,12 +155,14 @@ async def pretty_defer(
                                 content=content_with_emoji, embed=embed, view=view
                             )
                             return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            pretty_log(
+                                "❌ ERROR", f"[pretty_defer.success] edit failed: {e}"
+                            )
                     await self.interaction.followup.send(
                         content=content_with_emoji,
                         embed=embed,
-                        view=view,
+                        **({"view": view} if view is not None else {}),
                         ephemeral=True,
                     )
                 else:
@@ -168,19 +170,26 @@ async def pretty_defer(
                         if msg:
                             try:
                                 await msg.delete()
-                            except Exception:
-                                pass
+                            except Exception as e:
+                                pretty_log(
+                                    "❌ ERROR",
+                                    f"[pretty_defer.success] delete failed: {e}",
+                                )
                     if msg:
                         try:
                             await msg.edit(
                                 content=content_with_emoji, embed=embed, view=view
                             )
                             return
-                        except Exception:
-                            pass
+                        except Exception as e:
+                            pretty_log(
+                                "❌ ERROR", f"[pretty_defer.success] edit failed: {e}"
+                            )
                     if getattr(self.interaction, "channel", None):
                         await self.interaction.channel.send(
-                            content=content_with_emoji, embed=embed, view=view
+                            content=content_with_emoji,
+                            embed=embed,
+                            **({"view": view} if view is not None else {}),
                         )
 
             except Exception as e:
@@ -235,7 +244,10 @@ async def pretty_defer(
             and not interaction.response.is_done()
         ):
             await interaction.response.send_message(
-                content=msg_content, embed=embed, view=view, ephemeral=ephemeral
+                content=msg_content,
+                embed=embed,
+                **({"view": view} if view is not None else {}),
+                ephemeral=ephemeral,
             )
             try:
                 msg = await interaction.original_response()
@@ -243,10 +255,13 @@ async def pretty_defer(
                 pass
         else:
             msg = await interaction.followup.send(
-                content=msg_content, embed=embed, view=view, ephemeral=ephemeral
+                content=msg_content,
+                embed=embed,
+                **({"view": view} if view is not None else {}),
+                ephemeral=ephemeral,
             )
-    except Exception:
-        pass
+    except Exception as e:
+        pretty_log("❌ ERROR", f"[pretty_defer] initial send failed: {e}")
 
     handle = PrettyDeferHandle(interaction, msg, ephemeral=ephemeral)
     if view:
