@@ -25,6 +25,95 @@ from utils.logs.pretty_log import pretty_log
 
 # enable_debug(f"{__name__}.list_item_func")
 
+FIELD_VALUE_LIMIT = 1024
+FIELD_NAME_LIMIT = 256
+EMBED_FIELD_LIMIT = 25
+MESSAGE_EMBED_LIMIT = 10
+MESSAGE_CHARACTER_LIMIT = 6000
+
+
+def _split_category_values(items, prefix):
+    """Split a category into field values that fit Discord's field limit."""
+    values = []
+    current = prefix
+    item_capacity = FIELD_VALUE_LIMIT - len(prefix)
+
+    for item in items:
+        remaining = item
+        separator = ", " if current != prefix else ""
+        available = FIELD_VALUE_LIMIT - len(current) - len(separator)
+
+        if len(remaining) <= available:
+            current += separator + remaining
+            continue
+
+        if current != prefix:
+            values.append(current)
+            current = prefix
+
+        while len(remaining) > item_capacity:
+            values.append(prefix + remaining[:item_capacity])
+            remaining = remaining[item_capacity:]
+        current += remaining
+
+    if current != prefix:
+        values.append(current)
+    return values
+
+
+def _paginate_fields(fields, total_count):
+    """Build embeds and message pages within Discord's embed limits."""
+    pages = []
+    page_character_count = 0
+    current_embed = None
+
+    def create_embed(is_first):
+        embed = discord.Embed(
+            title="Balloon Items" if is_first else "Balloon Items (continued)",
+            description=(
+                "Here are the items currently in the balloons:" if is_first else None
+            ),
+            color=SHOP_COLOR,
+        )
+        embed.set_footer(text=f"Total number of all items: {total_count}")
+        return embed
+
+    for field_name, field_value in fields:
+        field_length = len(field_name) + len(field_value)
+
+        if (
+            current_embed is not None
+            and len(current_embed.fields) < EMBED_FIELD_LIMIT
+            and len(current_embed) + field_length <= MESSAGE_CHARACTER_LIMIT
+            and page_character_count + field_length <= MESSAGE_CHARACTER_LIMIT
+        ):
+            current_embed.add_field(name=field_name, value=field_value, inline=False)
+            page_character_count += field_length
+            continue
+
+        if not pages:
+            pages.append([])
+
+        is_first = not any(pages)
+        candidate = create_embed(is_first)
+        candidate_length = len(candidate) + field_length
+        if (
+            len(pages[-1]) >= MESSAGE_EMBED_LIMIT
+            or page_character_count + candidate_length > MESSAGE_CHARACTER_LIMIT
+        ):
+            pages.append([])
+            page_character_count = 0
+            is_first = False
+            candidate = create_embed(is_first)
+            candidate_length = len(candidate) + field_length
+
+        pages[-1].append(candidate)
+        current_embed = candidate
+        current_embed.add_field(name=field_name, value=field_value, inline=False)
+        page_character_count += candidate_length
+
+    return pages
+
 
 def strip_emoji(item_name):
     # Remove Discord custom emoji (e.g., <...>) and leading emoji/spaces
@@ -182,93 +271,43 @@ async def list_item_func(
     #   ...
     # }
 
-    # Create embed
-    embed = discord.Embed(
-        title="Balloon Items",
-        description="Here are the items currently in the balloons:",
-        color=SHOP_COLOR,
-    )
     total_all = sum(balloon_item_counts.values())
+    category_emojis = (
+        ("golden", Emojis.Golden),
+        ("shiny gigantamax", Emojis.shinygigantamax),
+        ("shiny mega", Emojis.shinymega),
+        ("shiny", Emojis.Shiny),
+        ("gigantamax", Emojis.gigantamax),
+        ("mega", Emojis.mega),
+        ("legendary", Emojis.Legendary),
+        ("super rare", Emojis.Super_Rare),
+        ("rare", Emojis.Rare),
+        ("uncommon", Emojis.Uncommon),
+        ("common", Emojis.Common),
+        ("rock", "🪨"),
+    )
+    fields = []
     for balloon_name, categories in categorized_balloons.items():
         count = balloon_item_counts.get(balloon_name, 0)
-        field_name = f"**{balloon_name.title()} ({count})**"
-        legendary_mons_str = (
-            f"{Emojis.Legendary}" + (", ".join(categories["legendary"]))
-            if categories["legendary"]
-            else ""
+        balloon_label = f"{balloon_name.title()} ({count})"
+        for category, emoji in category_emojis:
+            for part_index, field_value in enumerate(
+                _split_category_values(categories[category], f"{emoji} ")
+            ):
+                field_label = (
+                    f"{balloon_label} - {category.title()}"
+                    + (" (continued)" if part_index else "")
+                )
+                fields.append(
+                    (field_label[:FIELD_NAME_LIMIT], field_value)
+                )
+
+    pages = _paginate_fields(fields, total_all)
+    if not pages:
+        pages = _paginate_fields(
+            [("Balloon Items", "No stocked items found.")], total_all
         )
-        mega_mons_str = (
-            f"{Emojis.mega}" + (", ".join(categories["mega"]))
-            if categories["mega"]
-            else ""
-        )
-        gigantamax_mons_str = (
-            f"{Emojis.gigantamax}" + (", ".join(categories["gigantamax"]))
-            if categories["gigantamax"]
-            else ""
-        )
-        shiny_mons_str = (
-            f"{Emojis.Shiny}" + (", ".join(categories["shiny"]))
-            if categories["shiny"]
-            else ""
-        )
-        shiny_mega_mons_str = (
-            f"{Emojis.shinymega}" + (", ".join(categories["shiny mega"]))
-            if categories["shiny mega"]
-            else ""
-        )
-        shiny_gigantamax_mons_str = (
-            f"{Emojis.shinygigantamax}" + (", ".join(categories["shiny gigantamax"]))
-            if categories["shiny gigantamax"]
-            else ""
-        )
-        golden_mons_str = (
-            f"{Emojis.Golden}" + (", ".join(categories["golden"]))
-            if categories["golden"]
-            else ""
-        )
-        super_rare_mons_str = (
-            f"{Emojis.Super_Rare}" + (", ".join(categories["super rare"]))
-            if categories["super rare"]
-            else ""
-        )
-        rare_mons_str = (
-            f"{Emojis.Rare}" + (", ".join(categories["rare"]))
-            if categories["rare"]
-            else ""
-        )
-        uncommon_mons_str = (
-            f"{Emojis.Uncommon}" + (", ".join(categories["uncommon"]))
-            if categories["uncommon"]
-            else ""
-        )
-        common_mons_str = (
-            f"{Emojis.Common}" + (", ".join(categories["common"]))
-            if categories["common"]
-            else ""
-        )
-        rock_mons_str = (
-            f"🪨" + (", ".join(categories["rock"])) if categories["rock"] else ""
-        )
-        field_value = "\n".join(
-            filter(
-                None,
-                [
-                    golden_mons_str,
-                    shiny_gigantamax_mons_str,
-                    shiny_mega_mons_str,
-                    shiny_mons_str,
-                    gigantamax_mons_str,
-                    mega_mons_str,
-                    legendary_mons_str,
-                    super_rare_mons_str,
-                    rare_mons_str,
-                    uncommon_mons_str,
-                    common_mons_str,
-                    rock_mons_str,
-                ],
-            )
-        )
-        embed.add_field(name=field_name, value=field_value, inline=False)
-    embed.set_footer(text=f"Total number of all items: {total_all}")
-    await loader.success(content="", embed=embed)
+
+    await loader.success(content="", embeds=pages[0])
+    for page in pages[1:]:
+        await interaction.followup.send(embeds=page, ephemeral=True)

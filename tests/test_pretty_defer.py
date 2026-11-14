@@ -58,6 +58,17 @@ class PrettyDeferTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(sender.await_count, 1)
                 self.assertNotIn("view", sender.call_args.kwargs)
 
+    async def test_success_edits_with_multiple_embeds(self):
+        message = SimpleNamespace(id=1, edit=AsyncMock())
+        interaction = self.make_interaction(original=message)
+        loader = await pretty_defer(interaction)
+        embeds = [SimpleNamespace(), SimpleNamespace()]
+
+        await loader.success(content="", embeds=embeds)
+
+        self.assertIs(message.edit.call_args.kwargs["embeds"], embeds)
+        self.assertNotIn("embed", message.edit.call_args.kwargs)
+
     async def test_success_edit_can_clear_existing_view(self):
         message = SimpleNamespace(id=1, edit=AsyncMock())
         interaction = self.make_interaction(original=message)

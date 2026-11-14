@@ -117,6 +117,7 @@ async def pretty_defer(
             self,
             content: str | None = "Done!",
             embed: discord.Embed | None = None,
+            embeds: list[discord.Embed] | None = None,
             view: discord.ui.View | None = None,
             ephemeral: bool | None = None,  # override ephemeral flag
             override_public: bool = False,  # force public even if initial was ephemeral
@@ -147,12 +148,14 @@ async def pretty_defer(
             else:
                 content_with_emoji = base_content
 
+            embed_kwargs = {"embeds": embeds} if embeds is not None else {"embed": embed}
+
             try:
                 if final_ephemeral and not override_public:
                     if msg:
                         try:
                             await msg.edit(
-                                content=content_with_emoji, embed=embed, view=view
+                                content=content_with_emoji, **embed_kwargs, view=view
                             )
                             return
                         except Exception as e:
@@ -161,7 +164,7 @@ async def pretty_defer(
                             )
                     await self.interaction.followup.send(
                         content=content_with_emoji,
-                        embed=embed,
+                        **embed_kwargs,
                         **({"view": view} if view is not None else {}),
                         ephemeral=True,
                     )
@@ -178,7 +181,7 @@ async def pretty_defer(
                     if msg:
                         try:
                             await msg.edit(
-                                content=content_with_emoji, embed=embed, view=view
+                                content=content_with_emoji, **embed_kwargs, view=view
                             )
                             return
                         except Exception as e:
@@ -188,7 +191,7 @@ async def pretty_defer(
                     if getattr(self.interaction, "channel", None):
                         await self.interaction.channel.send(
                             content=content_with_emoji,
-                            embed=embed,
+                            **embed_kwargs,
                             **({"view": view} if view is not None else {}),
                         )
 
