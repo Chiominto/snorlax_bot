@@ -143,7 +143,7 @@ async def quest_helper_listener(
                 )
         else:
             # Update balance
-            current_balance = user_currency_info.get("balance", 0)
+            current_balance = user_currency_info.get("currency", 0)
             new_balance = current_balance + points
             await update_currency(
                 bot=bot,

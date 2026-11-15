@@ -9,7 +9,7 @@ from constants.celestial_constants import (
 )
 from utils.autoresponder.pray import handle_pray_autoresponder
 from utils.functions.market_feed_listener import process_market_feed_message
-from utils.listener_func import quest_helper_listener
+from utils.listener_func.quest_helper_listener import quest_helper_listener
 from utils.listener_func.autospawn_listener import as_spawn_ping
 from utils.logs.pretty_log import pretty_log
 from utils.listener_func.dex_listener import dex_listener
