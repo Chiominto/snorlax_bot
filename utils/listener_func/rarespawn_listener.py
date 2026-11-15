@@ -26,7 +26,11 @@ from utils.db.server_currency_db import (
     user_exists_in_server_currency,
 )
 
-from utils.functions.pokemeow_reply import get_pokemeow_reply_member
+from utils.functions.pokemeow_reply import (
+    get_pokemeow_reply_member,
+    get_pokemeow_reply_two,
+    get_pokemeow_reply_or_interaction_member,
+)
 from utils.functions.pretty_defer import pretty_defer
 from utils.functions.role_checks import is_clan_member, is_staff_member
 from utils.functions.webhook_func import send_webhook_log
@@ -255,10 +259,14 @@ async def handle_rarespawn_catch(
 
     # check if rare spawn based on color and description
     if embed_color in LOW_RARITY_COLORS:
+        pretty_log(
+            "info",
+            f"color in {LOW_RARITY_COLORS}, embed color: {embed_color}",
+        )
         return
 
     # Identify the user who caught the rarespawn
-    member = await get_pokemeow_reply_member(before_message)
+    member = await get_pokemeow_reply_or_interaction_member(before_message)
     if not member:
         # Extract username from embed as fallback
         username = extract_member_username_from_embed(embed)
