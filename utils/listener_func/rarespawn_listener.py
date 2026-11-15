@@ -132,6 +132,18 @@ def extract_pokemon_name_from_description(description: str) -> str | None:
     return None
 
 
+async def resolve_guild_member(guild: discord.Guild, user_id: int) -> discord.Member | None:
+    member = guild.get_member(user_id)
+    if member is not None:
+        return member
+
+    try:
+        return await guild.fetch_member(user_id)
+    except discord.HTTPException as error:
+        pretty_log("error", f"Failed to fetch member {user_id}: {error}")
+        return None
+
+
 async def add_points_to_member(
     bot: discord.Client,
     member: discord.Member,
@@ -256,6 +268,8 @@ async def handle_rarespawn_catch(
 
     rarity = None
     guild = after_message.guild
+    if guild is None:
+        return
 
     # check if rare spawn based on color and description
     if embed_color in LOW_RARITY_COLORS:
@@ -266,8 +280,17 @@ async def handle_rarespawn_catch(
         return
 
     # Identify the user who caught the rarespawn
-    member = await get_pokemeow_reply_or_interaction_member(before_message)
-    if not member:
+    user = await get_pokemeow_reply_or_interaction_member(before_message)
+    if user is None:
+        user = await get_pokemeow_reply_or_interaction_member(after_message)
+
+    if isinstance(user, discord.Member):
+        member = user
+    elif user is not None:
+        member = await resolve_guild_member(guild, user.id)
+        if member is None:
+            return
+    else:
         # Extract username from embed as fallback
         pretty_log(
             "info",
@@ -291,7 +314,7 @@ async def handle_rarespawn_catch(
                 f"Failed to fetch user ID for username: {username}",
             )
             return
-        member = guild.get_member(user_id)
+        member = await resolve_guild_member(guild, user_id)
         if not member:
             pretty_log(
                 "info",
