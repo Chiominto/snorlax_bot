@@ -36,18 +36,38 @@ async def quest_helper_listener(
     bot: discord.Client, message: discord.Message
 ):
     if message.author.id != POKEMEOW_APPLICATION_ID:
+        pretty_log(
+            "info",
+            f"Ignored quest-helper candidate from unexpected author {message.author.id}.",
+            label="Quest Helper Listener",
+        )
         return
 
     # Make it bypass if the context is testing
     if not is_burger_shop_ongoing():
+        pretty_log(
+            "info",
+            "Ignored quest-helper reward because the Burger shop event is not ongoing.",
+            label="Quest Helper Listener",
+        )
         return
 
     member = await get_pokemeow_reply_two(message)
     if not member:
+        pretty_log(
+            "info",
+            "Ignored quest-helper reward because the PokéMeow message did not resolve to a replied-to member.",
+            label="Quest Helper Listener",
+        )
         return
 
     # Only in quest helper channel
     if message.channel.id != CELESTIAL_TEXT_CHANNELS.quest_help:
+        pretty_log(
+            "info",
+            f"Ignored quest-helper reward in channel {message.channel.id}; expected {CELESTIAL_TEXT_CHANNELS.quest_help}.",
+            label="Quest Helper Listener",
+        )
         return
 
     guild = message.guild
@@ -58,6 +78,11 @@ async def quest_helper_listener(
 
     # Only members with the clan member role or sakura bear role can earn points
     if clan_member_role not in member.roles:
+        pretty_log(
+            "info",
+            f"Ignored quest-helper reward for {member_name} ({member_id}) because they lack the required clan role.",
+            label="Quest Helper Listener",
+        )
         debug_log(
             f"Member {member} does not have the required role to earn points.",
         )
