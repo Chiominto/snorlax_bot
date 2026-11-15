@@ -152,7 +152,8 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
         phrase = random.choice(blessing_phrases)
         extra_points = await handle_extra_meal_reward(bot, user)
         if extra_points > 0:
-            extra_meal_str = f"\n> - Bonus: You received **{extra_points} {CURRENCY_EMOJI}** for your efforts!"
+            total_currency = server_currency_cache[user.id]["currency"]
+            extra_meal_str = f"\n> - Bonus: You received **{extra_points} {CURRENCY_EMOJI}** for your efforts! You now have **{total_currency} {CURRENCY_EMOJI}** in total."
             fry_point_reward_str += extra_meal_str
         content = f"{phrase}\n{fry_point_reward_str}"
         embed = discord.Embed(
