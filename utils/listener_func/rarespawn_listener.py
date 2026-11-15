@@ -269,8 +269,16 @@ async def handle_rarespawn_catch(
     member = await get_pokemeow_reply_or_interaction_member(before_message)
     if not member:
         # Extract username from embed as fallback
+        pretty_log(
+            "info",
+            "Failed to get member from interaction, trying to extract from embed...",
+        )
         username = extract_member_username_from_embed(embed)
         if not username:
+            pretty_log(
+                "info",
+                "Failed to extract username from embed.",
+            )
             return
         from utils.cache.celestial_members_cache import (
             fetch_user_id_by_user_name_or_pokemon_name_cache,
@@ -278,9 +286,17 @@ async def handle_rarespawn_catch(
 
         user_id = fetch_user_id_by_user_name_or_pokemon_name_cache(username)
         if not user_id:
+            pretty_log(
+                "info",
+                f"Failed to fetch user ID for username: {username}",
+            )
             return
         member = guild.get_member(user_id)
         if not member:
+            pretty_log(
+                "info",
+                f"Failed to get member object for user ID: {user_id}",
+            )
             return
 
     if after_message.id in processed_rare_catches:
