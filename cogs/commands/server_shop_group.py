@@ -9,6 +9,7 @@ from utils.db.server_shop_db import shop_item_autocomplete
 from utils.functions.command_safe import run_command_safe
 from group_command_func.server_shop import *
 
+from utils.functions.role_checks import *
 
 # 💠────────────────────────────────────────────
 # [🟣 COG] Shop Command Group Cog
@@ -139,6 +140,7 @@ class ShopCommandGroup(commands.Cog):
         new_description="The new description of the item",
         new_image_link="The new image link for the item",
     )
+    @burger_shop_staff_only()
     async def shop_edit_item(
         self,
         interaction: discord.Interaction,
@@ -176,6 +178,7 @@ class ShopCommandGroup(commands.Cog):
     @app_commands.describe(
         item_name="The name of the item to remove",
     )
+    @burger_shop_staff_only()
     async def shop_remove_item(
         self,
         interaction: discord.Interaction,
@@ -199,6 +202,7 @@ class ShopCommandGroup(commands.Cog):
         name="clear",
         description="Clear all items from the server shop",
     )
+    @burger_shop_staff_only()
     async def shop_clear_items(
         self,
         interaction: discord.Interaction,
@@ -216,4 +220,3 @@ class ShopCommandGroup(commands.Cog):
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(ShopCommandGroup(bot))
-

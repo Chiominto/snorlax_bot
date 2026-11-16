@@ -8,6 +8,7 @@ from utils.functions.command_safe import run_command_safe
 from group_command_func.balloon import *
 from utils.db.balloon_prizes_db import balloon_name_autocomplete
 from utils.cache.pokemon_cache import pokemon_autocomplete
+from utils.functions.role_checks import *
 
 # 💠────────────────────────────────────────────
 # [🟣 COG] Balloon Commands Group Cog
@@ -35,6 +36,7 @@ class BalloonCommandGroup(commands.Cog):
         item_name="The name of the item you want to add to the balloon",
         stock="The stock of the item to add (default is 1)",
     )
+    @burger_shop_staff_only()
     async def balloon_add(
         self,
         interaction: discord.Interaction,
@@ -87,6 +89,7 @@ class BalloonCommandGroup(commands.Cog):
         item_9="The ninth item to add to the balloon (optional)",
         item_10="The tenth item to add to the balloon (optional)",
     )
+    @burger_shop_staff_only()
     async def balloon_multi_add(
         self,
         interaction: discord.Interaction,
@@ -134,6 +137,7 @@ class BalloonCommandGroup(commands.Cog):
         balloon_name="The name of the balloon from which you want to remove an item",
         item_name="The name of the item you want to remove from the balloon",
     )
+    @burger_shop_staff_only()
     async def balloon_remove(
         self,
         interaction: discord.Interaction,
@@ -158,6 +162,7 @@ class BalloonCommandGroup(commands.Cog):
         name="list",
         description="List all items in a balloon",
     )
+    @burger_shop_staff_only()
     async def balloon_list(
         self,
         interaction: discord.Interaction,
