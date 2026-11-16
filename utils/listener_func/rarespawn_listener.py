@@ -233,7 +233,7 @@ async def add_points_to_member(
         description=(
             f"- **Member:** {member.mention}\n"
             f"- **Pokemon:** {display_pokemon_name}\n"
-            f"- **Catch Type:** {catch_type}\n"
+            f"- **Rarespawn Type:** {catch_type}\n"
             f"- **Reward:** {points} {CURRENCY_EMOJI}\n"
             f"- **New Balance:** {new_balance} {CURRENCY_EMOJI}\n"
         ),

@@ -1,6 +1,9 @@
 from .aesthetics import Emojis
 from .celestial_constants import CELESTIAL_EMOJIS, DEFAULT_EMBED_COLOR
 
+EVENT_EGG_EXCLUSIVES = ["shiny tadbulb", "shiny nymble"]
+
+
 SHOP_COLOR  = DEFAULT_EMBED_COLOR
 FRY_POINT_EMOJI = Emojis.saint_fries
 CURRENCY_NAME = "Starry Meal"
@@ -18,6 +21,7 @@ POINT_MAP = {
     "fishing_shiny": 3,
     "fishing_golden": 5,
     "event_exclusive": 3,
+    "shiny_egg_exclusive": 2,
 }
 
 nugget_launcher_balloons = [

@@ -9,10 +9,12 @@ from constants.celestial_constants import (
 )
 from utils.autoresponder.pray import handle_pray_autoresponder
 from utils.functions.market_feed_listener import process_market_feed_message
-from utils.listener_func.quest_helper_listener import quest_helper_listener
 from utils.listener_func.autospawn_listener import as_spawn_ping
-from utils.logs.pretty_log import pretty_log
 from utils.listener_func.dex_listener import dex_listener
+from utils.listener_func.egg_hatch_listener import egg_hatch_listener_func
+from utils.listener_func.quest_helper_listener import quest_helper_listener
+from utils.listener_func.res_egg_listener import handle_res_egg_hatch
+from utils.logs.pretty_log import pretty_log
 
 MARKET_FEED_CHANNELS = {
     CELESTIAL_TEXT_CHANNELS.curs_feed,
@@ -145,6 +147,47 @@ class MessageCreateListener(commands.Cog):
                     f"Detected dex command embed with 'Dex Number' field. Triggering dex listener.",
                 )
                 await dex_listener(self.bot, message)
+
+        # ————————————————————————————————
+        # 🩵 EGG HATCH LISTENER
+        # ————————————————————————————————
+        if (
+            message.embeds
+            and message.embeds[0]
+            and message.content
+            and message.embeds[0].author
+            and "hatched an Egg!" in (message.embeds[0].author.name or "")
+            and "just hatched a" in message.content
+        ):
+            try:
+                await egg_hatch_listener_func(bot=self.bot, message=message)
+            except Exception as eh_e:
+                pretty_log(
+                    "error",
+                    f"Egg hatch processing failed for message {message.id} in {message.channel.name}: {eh_e}",
+                    source="egg_hatch_listener_func",
+                )
+
+        # ————————————————————————————————
+        # 🩵 RESEARCH LAB EGG HATCH LISTENER
+        # ————————————————————————————————
+        if first_embed and "research lab hatch" in first_embed_author.lower():
+            try:
+                pretty_log(
+                    "ready",
+                    f"Processing Research Lab egg hatch from message ID {getattr(message, 'id', 'unknown')}",
+                )
+                await handle_res_egg_hatch(bot=self.bot, message=message)
+                pretty_log(
+                    "ready",
+                    f"Successfully processed Research Lab egg hatch from message ID {getattr(message, 'id', 'unknown')}",
+                )
+            except Exception as e:
+                pretty_log(
+                    "critical",
+                    f"Failed processing Research Lab egg hatch from message ID {getattr(message, 'id', 'unknown')}: {e}",
+                )
+
 # 🟣────────────────────────────────────────────
 #         💤 Setup Function
 # 🟣────────────────────────────────────────────
