@@ -60,6 +60,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
         fry_points="The amount of fry points to add",
         burnt_fry_points="The amount of burnt fry points to add",
     )
+    @burger_shop_staff_only()
     async def balance_add(
         self,
         interaction: discord.Interaction,
@@ -95,6 +96,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
         fry_points="The amount of fry points to remove",
         burnt_fry_points="The amount of burnt fry points to remove",
     )
+    @burger_shop_staff_only()
     async def balance_remove(
         self,
         interaction: discord.Interaction,
@@ -124,6 +126,7 @@ class ServerCurrencyCommandGroup(commands.Cog):
         name="reset",
         description="Resets everyone's server currency balances",
     )
+    @burger_shop_staff_only()
     async def balance_reset(
         self,
         interaction: discord.Interaction,

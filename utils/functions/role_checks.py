@@ -2,8 +2,12 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from constants.celestial_constants import (BURGER_USER_ID, CELESTIAL_ROLES,
-                                           HANA_USER_ID, KHY_USER_ID)
+from constants.celestial_constants import (
+    BURGER_USER_ID,
+    CELESTIAL_ROLES,
+    HANA_USER_ID,
+    KHY_USER_ID,
+)
 from utils.logs.pretty_log import pretty_log
 
 
@@ -18,12 +22,17 @@ class StaffCheckFailure(app_commands.CheckFailure):
     pass
 
 
+class BurgerShopStaffCheckFailure(app_commands.CheckFailure):
+    pass
+
+
 # 🌸──────────────────────────────────────────────────────
 # 🐾💫 Cute Error Messages by Server — Cottagecore Style 💫🌿
 # ───────────────────────────────────────────────────────
 ERROR_MESSAGES = {
     "staff": "Only staff members can use this command. If you think this is a mistake, please contact the server staff.",
     "owner_coowner": "Only the server owner and co-owner can use this command. If you think this is a mistake, please contact the server staff.",
+    "burger_shop_staff": "Only burger shop staff can use this command.",
 }
 
 
@@ -49,6 +58,7 @@ def staff_only():
 
     return app_commands.check(predicate)
 
+
 def owner_and_co_owner_only():
     async def predicate(interaction: discord.Interaction):
         # Allow khy (user id: 952071312124313611)
@@ -63,12 +73,31 @@ def owner_and_co_owner_only():
 
     return app_commands.check(predicate)
 
+
+def burger_shop_staff_only():
+    async def predicate(interaction: discord.Interaction):
+        # Allow khy (user id: 952071312124313611)
+        if getattr(interaction.user, "id", None) == KHY_USER_ID:
+            return True
+        if not is_burger_shop_staff(interaction):
+            raise BurgerShopStaffCheckFailure(ERROR_MESSAGES["burger_shop_staff"])
+        return True
+
+    return app_commands.check(predicate)
+
+
 # Check if user is staff member
 def is_staff_member(member: discord.Member) -> bool:
     """
     Checks if a member has any vna staff roles.
     """
-    staff_role_ids = [CELESTIAL_ROLES.staff, CELESTIAL_ROLES.clan_owner_, CELESTIAL_ROLES.co_owner, CELESTIAL_ROLES.aurora_aide_, CELESTIAL_ROLES.hana_role]
+    staff_role_ids = [
+        CELESTIAL_ROLES.staff,
+        CELESTIAL_ROLES.clan_owner_,
+        CELESTIAL_ROLES.co_owner,
+        CELESTIAL_ROLES.aurora_aide_,
+        CELESTIAL_ROLES.hana_role,
+    ]
     if any(role.id in staff_role_ids for role in member.roles):
         return True
     return False
