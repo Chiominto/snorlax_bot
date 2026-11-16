@@ -27,12 +27,17 @@ set_bot(bot)
 # ❀───────────────────────────────❀
 @bot.tree.error
 async def on_app_command_error(interaction, error):
-    from utils.functions.role_checks import (OwnerCoownerCheckFailure,
-                                             StaffCheckFailure)
+    from utils.functions.role_checks import (
+        BurgerShopStaffCheckFailure,
+        OwnerCoownerCheckFailure,
+        StaffCheckFailure,
+    )
 
     if isinstance(error, OwnerCoownerCheckFailure):
         await interaction.response.send_message(str(error), ephemeral=True)
     elif isinstance(error, StaffCheckFailure):
+        await interaction.response.send_message(str(error), ephemeral=True)
+    elif isinstance(error, BurgerShopStaffCheckFailure):
         await interaction.response.send_message(str(error), ephemeral=True)
 
     elif isinstance(error, app_commands.CheckFailure):

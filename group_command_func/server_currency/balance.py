@@ -4,21 +4,21 @@ from zoneinfo import ZoneInfo
 import discord
 from discord.ext import commands
 
-from constants.celestial_constants import (CELESTIAL_SERVER_ID,
-                                           DEFAULT_EMBED_COLOR)
-from constants.server_currency import (BURNT_FRY_EMOJI, CURRENCY_EMOJI,
-                                       FRY_POINT_EMOJI)
+from constants.celestial_constants import CELESTIAL_SERVER_ID, DEFAULT_EMBED_COLOR
+from constants.server_currency import BURNT_FRY_EMOJI, CURRENCY_EMOJI, FRY_POINT_EMOJI
 from utils.cache.cache_list import server_currency_cache
 from utils.cache.server_currency_cache import load_server_currency_cache
-from utils.db.server_currency_db import (reset_all_burnt_fry_points_only,
-                                         reset_all_currency_and_fry_points,
-                                         reset_all_currency_only,
-                                         reset_all_fry_points_only,
-                                         reset_server_currency_table,
-                                         upsert_server_currency,
-                                         upsert_user_burnt_fry_points,
-                                         upsert_user_currency,
-                                         upsert_user_fry_points)
+from utils.db.server_currency_db import (
+    reset_all_burnt_fry_points_only,
+    reset_all_currency_and_fry_points,
+    reset_all_currency_only,
+    reset_all_fry_points_only,
+    reset_server_currency_table,
+    upsert_server_currency,
+    upsert_user_burnt_fry_points,
+    upsert_user_currency,
+    upsert_user_fry_points,
+)
 from utils.functions.pretty_defer import pretty_defer
 from utils.functions.role_checks import is_clan_member, is_staff_member
 from utils.logs.pretty_log import pretty_log
@@ -104,7 +104,9 @@ async def add_balance_func(
 
     if burnt_fry_points:
         current_burnt_fry_points = (
-            current_balance_info.get("burnt_fry_points", 0) if current_balance_info else 0
+            current_balance_info.get("burnt_fry_points", 0)
+            if current_balance_info
+            else 0
         )
         new_burnt_fry_points = current_burnt_fry_points + burnt_fry_points
         await upsert_user_burnt_fry_points(
@@ -203,7 +205,9 @@ async def remove_balance_func(
             current_balance_info.get("fry_points", 0) if current_balance_info else 0
         )
         current_burnt_fry_points = (
-            current_balance_info.get("burnt_fry_points", 0) if current_balance_info else 0
+            current_balance_info.get("burnt_fry_points", 0)
+            if current_balance_info
+            else 0
         )
 
     updated_starry_meal = False
