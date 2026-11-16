@@ -156,8 +156,8 @@ class MessageCreateListener(commands.Cog):
             and message.embeds[0]
             and message.content
             and message.embeds[0].author
-            and "hatched an Egg!" in (message.embeds[0].author.name or "")
-            and "just hatched a" in message.content
+            and "hatched" in (message.embeds[0].author.name or "").lower()
+            and "just hatched" in message.content.lower()
         ):
             try:
                 await egg_hatch_listener_func(bot=self.bot, message=message)

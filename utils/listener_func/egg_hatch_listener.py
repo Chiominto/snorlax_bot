@@ -50,6 +50,20 @@ BOT_LOG_ID = TEST_BOT_LOG_ID
 processed_egg_hatches = set()
 
 
+def extract_event_hatches(content: str) -> list[str]:
+    hatch_start = content.lower().find("just hatched")
+    if hatch_start == -1:
+        return []
+
+    exclusive_names = {name.casefold() for name in EVENT_EGG_EXCLUSIVES}
+    bold_text = re.findall(r"\*\*([^*]+)\*\*", content[hatch_start:])
+    return [
+        name.strip()
+        for name in bold_text
+        if name.strip().casefold() in exclusive_names
+    ]
+
+
 # enable_debug(f"{__name__}.egg_hatch_listener_func")
 
 
@@ -74,27 +88,20 @@ async def egg_hatch_listener_func(
     embed_color = embed.color.value if embed and embed.color else None
     thumbnail_url = embed.image.url if embed and embed.image else None
 
-    # Extract Pokemon name from message content
-    pokemon_name = None
-    if content:
-        # Pattern: "just hatched a <:447:...> **Riolu**!"
-        hatch_match = re.search(r"just hatched a.*?\*\*([^*]+)\*\*", content)
-        if hatch_match:
-            pokemon_name = hatch_match.group(1).strip()
-            pretty_log(
-                tag="info",
-                message=f"Detected egg hatch of '{pokemon_name}' from message content.",
-                label="💖 EGG HATCH LISTENER",
-            ),
-
-    if not pokemon_name:
-        # Say why it didnt match
+    event_hatches = extract_event_hatches(content) if content else []
+    if not event_hatches:
         debug_log(
-            f"No pokemon_name matched in message content: '{content}' (ID: {message.id}). "
-            f"Pattern used: r'just hatched a.*?\\*\\*([^*]+)\\*\\*'. "
-            f"Regex result: {'No match' if not 'hatch_match' in locals() or not hatch_match else hatch_match}"
+            f"No event-exclusive Pokemon matched in message content: '{content}' "
+            f"(ID: {message.id})."
         )
         return
+
+    for pokemon_name in event_hatches:
+        pretty_log(
+            tag="info",
+            message=f"Detected event-exclusive egg hatch of '{pokemon_name}'.",
+            label="💖 EGG HATCH LISTENER",
+        )
 
     member = await get_pokemeow_reply_or_interaction_member(message)
     if not member:
@@ -107,9 +114,6 @@ async def egg_hatch_listener_func(
         return
     processed_egg_hatches.add(message.id)
 
-    lowered_pokemon_name = pokemon_name.lower()
-    stripped_pokemon_name = pokemon_name.replace("Shiny ", "").strip()
-
     clan_role = message.guild.get_role(CELESTIAL_ROLES.celestialnova_)
     donated_role = message.guild.get_role(CELESTIAL_ROLES.tip_jar_titan)
 
@@ -119,40 +123,43 @@ async def egg_hatch_listener_func(
     ):
         return  # dont reward if not clan member or donor
 
-    # Reward points
-    if lowered_pokemon_name not in EVENT_EGG_EXCLUSIVES:
-        return  # Skip non-event exclusive egg hatches
-
-    # Determine points to award
     catch_type = "shiny_egg_exclusive"
     rarity = "shiny"
 
     points = POINT_MAP.get(catch_type, 0)
     rarity_emoji = rarity_meta.get(rarity, {}).get("emoji", "")
-    pokemon_name = stripped_pokemon_name.title()
-    display_pokemon_name = (
-        f"{rarity_emoji} {pokemon_name}" if rarity_emoji else pokemon_name
-    )
     context = catch_type.replace("_", " ").title()
 
-    # Add points to member
-    try:
-        await add_points_to_member(
-            bot=bot,
-            member=member,
-            points=points,
-            display_pokemon_name=display_pokemon_name,
-            message=message,
-            catch_type=context,
+    for hatched_pokemon in event_hatches:
+        pokemon_name = re.sub(
+            r"^shiny\s+", "", hatched_pokemon.strip(), flags=re.IGNORECASE
+        ).title()
+        display_pokemon_name = (
+            f"{rarity_emoji} {pokemon_name}" if rarity_emoji else pokemon_name
         )
-        pretty_log(
-            tag="info",
-            message=f"Successfully added {points} points to member {member} for message ID {message.id}.",
-            label="💖 EGG HATCH LISTENER",
-        )
-    except Exception as e:
-        pretty_log(
-            tag="error",
-            message=f"Failed to add points to member {member} for message ID {message.id}: {e}",
-            label="💖 EGG HATCH LISTENER",
-        )
+        try:
+            await add_points_to_member(
+                bot=bot,
+                member=member,
+                points=points,
+                display_pokemon_name=display_pokemon_name,
+                message=message,
+                catch_type=context,
+            )
+            pretty_log(
+                tag="info",
+                message=(
+                    f"Successfully added {points} points to member {member} "
+                    f"for {hatched_pokemon} in message ID {message.id}."
+                ),
+                label="💖 EGG HATCH LISTENER",
+            )
+        except Exception as e:
+            pretty_log(
+                tag="error",
+                message=(
+                    f"Failed to add points to member {member} for {hatched_pokemon} "
+                    f"in message ID {message.id}: {e}"
+                ),
+                label="💖 EGG HATCH LISTENER",
+            )
