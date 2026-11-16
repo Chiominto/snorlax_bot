@@ -824,7 +824,7 @@ dex = {
     245: "Suicune",
     246: "Larvitar",
     247: "Pupitar",
-    248: "Syranitar",
+    248: "Tyranitar",
     249: "Lugia",
     250: "Ho-oh",
     251: "Celebi",
