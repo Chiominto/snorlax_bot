@@ -1,5 +1,7 @@
 import discord
 
+from utils.logs.pretty_log import pretty_log
+
 
 async def get_pokemeow_reply_member(message: discord.Message) -> discord.Member | None:
     """
@@ -65,12 +67,11 @@ async def get_pokemeow_reply_two(message: discord.Message) -> discord.Member | N
     return member
 
 
-def get_message_interaction_member(
+async def get_message_interaction_member(
     message: discord.Message,
-) -> discord.Member | discord.User | None:
+) -> discord.Member | None:
     """
-    Returns the member who triggered the interaction that created this message, if available.
-    Returns None if not an interaction-created message or not a guild interaction.
+    Returns the guild member who triggered the interaction, if it can be resolved.
     """
     interaction_metadata = getattr(message, "interaction_metadata", None)
     if not interaction_metadata:
@@ -81,15 +82,29 @@ def get_message_interaction_member(
         return member
 
     user = getattr(interaction_metadata, "user", None)
-    if isinstance(user, (discord.Member, discord.User)):
+    if isinstance(user, discord.Member):
         return user
+    if not isinstance(user, discord.User):
+        return None
 
-    return None
+    guild = getattr(message, "guild", None)
+    if guild is None:
+        return None
+
+    member = guild.get_member(user.id)
+    if member is not None:
+        return member
+
+    try:
+        return await guild.fetch_member(user.id)
+    except discord.HTTPException as error:
+        pretty_log("error", f"Failed to fetch interaction member {user.id}: {error}")
+        return None
 
 
 async def get_pokemeow_reply_or_interaction_member(
     message: discord.Message,
-) -> discord.Member | discord.User | None:
+) -> discord.Member | None:
     """
     Returns the member who was replied to, or the interaction user as a fallback.
     """
@@ -97,4 +112,4 @@ async def get_pokemeow_reply_or_interaction_member(
     if member:
         return member
 
-    return get_message_interaction_member(message)
+    return await get_message_interaction_member(message)

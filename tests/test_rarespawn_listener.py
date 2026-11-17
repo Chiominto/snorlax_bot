@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import discord
 
+from utils.functions import pokemeow_reply
 from utils.listener_func import rarespawn_listener
 
 
@@ -12,6 +13,9 @@ class RareSpawnMemberTests(unittest.IsolatedAsyncioTestCase):
         log_patch = patch.object(rarespawn_listener, "pretty_log")
         log_patch.start()
         self.addCleanup(log_patch.stop)
+        interaction_log_patch = patch.object(pokemeow_reply, "pretty_log")
+        self.interaction_log = interaction_log_patch.start()
+        self.addCleanup(interaction_log_patch.stop)
         self.role = object()
         self.member = Mock(spec=discord.Member)
         self.member.id = 123
@@ -25,7 +29,10 @@ class RareSpawnMemberTests(unittest.IsolatedAsyncioTestCase):
             get_role=Mock(return_value=self.role),
         )
         self.before = SimpleNamespace(
-            author="PokéMeow#6691", reference=None, interaction_metadata=None
+            author="PokéMeow#6691",
+            reference=None,
+            interaction_metadata=None,
+            guild=self.guild,
         )
         embed = discord.Embed(
             color=rarespawn_listener.LEGENDARY_COLOR,
@@ -99,7 +106,10 @@ class RareSpawnMemberTests(unittest.IsolatedAsyncioTestCase):
 
         add_points.assert_not_awaited()
         self.assertTrue(
-            any("Failed to fetch member 123" in call.args[1] for call in log.call_args_list)
+            any(
+                "Failed to fetch interaction member 123" in call.args[1]
+                for call in self.interaction_log.call_args_list
+            )
         )
 
 
