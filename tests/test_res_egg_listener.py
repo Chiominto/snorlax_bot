@@ -44,6 +44,34 @@ class ResEggMemberLookupTests(unittest.TestCase):
 
 
 class ResEggRewardTests(unittest.IsolatedAsyncioTestCase):
+    async def test_ignores_nonexclusive_hatch_when_header_is_in_embed_title(self):
+        guild = Mock()
+        embed = discord.Embed(
+            title="**Purple Egg** hatched in **Lab Incubator 1**",
+            description=(
+                "<:Shiny:667126233217105931> <:239:722294751897845862> "
+                "**Shiny Elekid**\n\n"
+                "**Additional rewards**\n"
+                "- <:poke_egg:1372992365664403558> **5x Egg**"
+            ),
+        )
+        message = SimpleNamespace(
+            id=1572922290847359006,
+            guild=guild,
+            embeds=[embed],
+        )
+
+        with patch.object(res_egg_listener, "pretty_log") as pretty_log:
+            await res_egg_listener.handle_res_egg_hatch(Mock(), message)
+
+        guild.get_member_named.assert_not_called()
+        self.assertTrue(
+            any(
+                "not an event egg exclusive" in call.kwargs.get("message", "")
+                for call in pretty_log.call_args_list
+            )
+        )
+
     async def test_research_lab_shiny_nymble_hatch_awards_two_points(self):
         role = Mock()
         member = Mock(spec=discord.Member)

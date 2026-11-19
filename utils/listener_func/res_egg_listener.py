@@ -86,7 +86,7 @@ def get_res_egg_hatch_member(message: discord.Message) -> discord.Member | None:
 
 def extract_hatch_info(message: str) -> dict | None:
     match = re.search(
-        r"\*\*(.+?)\*\* hatched in \*\*(.+?)\*\*!.*?" r"\*\*(.+?)\*\*",
+        r"\*\*(.+?)\*\* hatched in \*\*(.+?)\*\*!?.*?" r"\*\*(.+?)\*\*",
         message,
         re.DOTALL,
     )
@@ -127,11 +127,16 @@ async def handle_res_egg_hatch(bot: discord.Client, message: discord.Message):
         include_trace=False,
     )
 
-    hatch_info = extract_hatch_info(embed.description)
+    hatch_text = embed.description or ""
+    hatch_info = extract_hatch_info(hatch_text)
+    if not hatch_info and embed.title:
+        hatch_text = f"{embed.title}\n{hatch_text}"
+        hatch_info = extract_hatch_info(hatch_text)
+
     if not hatch_info:
         pretty_log(
             tag="warn",
-            message="Could not extract hatch information from the embed description.",
+            message="Could not extract hatch information from the embed title or description.",
             label=LOG_LABEL,
             include_trace=False,
         )
