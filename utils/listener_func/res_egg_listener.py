@@ -135,7 +135,7 @@ async def handle_res_egg_hatch(bot: discord.Client, message: discord.Message):
 
     if not hatch_info:
         pretty_log(
-            tag="warn",
+            tag="info",
             message="Could not extract hatch information from the embed title or description.",
             label=LOG_LABEL,
             include_trace=False,
