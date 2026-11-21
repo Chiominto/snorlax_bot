@@ -15,6 +15,7 @@ from utils.listener_func.egg_hatch_listener import egg_hatch_listener_func
 from utils.listener_func.quest_helper_listener import quest_helper_listener
 from utils.listener_func.res_egg_listener import handle_res_egg_hatch
 from utils.logs.pretty_log import pretty_log
+from utils.listener_func.drop_donate_listener import drop_donate_listener
 
 MARKET_FEED_CHANNELS = {
     CELESTIAL_TEXT_CHANNELS.curs_feed,
@@ -187,7 +188,19 @@ class MessageCreateListener(commands.Cog):
                     "critical",
                     f"Failed processing Research Lab egg hatch from message ID {getattr(message, 'id', 'unknown')}: {e}",
                 )
-
+        # ————————————————————————————————
+        # 🩵 DROP DONATE LISTENER
+        # ————————————————————————————————
+        if content and "you successfully donated" in content.lower():
+            try:
+                await drop_donate_listener(bot=self.bot, message=message)
+            except Exception as dd_e:
+                pretty_log(
+                    "error",
+                    f"Drop donate processing failed for message {message.id} in {message.channel.name}: {dd_e}",
+                    source="drop_donate_listener",
+                )
+                
 # 🟣────────────────────────────────────────────
 #         💤 Setup Function
 # 🟣────────────────────────────────────────────

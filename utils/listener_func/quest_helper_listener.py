@@ -27,7 +27,7 @@ from utils.functions.webhook_func import send_webhook_log
 from utils.functions.burger_shop import is_burger_shop_ongoing
 from utils.logs.pretty_log import pretty_log
 
-enable_debug(f"{__name__}.quest_helper_listener")
+#enable_debug(f"{__name__}.quest_helper_listener")
 
 points = 1
 

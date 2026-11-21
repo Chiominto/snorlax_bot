@@ -11,6 +11,7 @@ BURGER_SHOP_STAFF = [KHY_USER_ID, BURGER_USER_ID]
 #       CELESTIAL_TEXT_CHANNELS
 # 💦☁────────────────────────────────────────────💦☁
 class CELESTIAL_TEXT_CHANNELS:
+    drops = 1542080565266616380
     clan_annoucement = 1500473482872623195
     quest_help = 1498151708008911008
 
