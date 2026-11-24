@@ -271,6 +271,26 @@ def update_market_value_in_cache(
         debug_log(f"Autocomplete index rebuilt after adding new Pokémon: {pokemon_name}")
 
 
+def update_pokemon_dex_info_in_cache(
+    pokemon_name: str,
+    dex_number: int | None = None,
+    rarity: str | None = None,
+    image_link: str | None = None,
+    pokemon_type: str | None = None,
+):
+    entry = pokemon_cache.get(pokemon_name.lower())
+    if entry is None:
+        return
+
+    updates = {
+        "dex_number": dex_number,
+        "rarity": rarity,
+        "image_link": image_link,
+        "pokemon_type": pokemon_type,
+    }
+    entry.update({key: value for key, value in updates.items() if value is not None})
+
+
 # 🍩────────────────────────────────────────────
 #        💤 Fetch Cache Functions
 # 🍩────────────────────────────────────────────

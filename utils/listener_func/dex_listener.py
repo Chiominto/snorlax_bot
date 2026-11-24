@@ -2,18 +2,12 @@
 #  Market embed parser utility
 # --------------------
 import re
-from typing import Optional, Tuple
 
 import discord
 
-from utils.db.pokemons_db import (
-    upsert_pokemon_db,
-    update_market_value
+from utils.db.pokemons_db import update_pokemon_dex_info
 
-
-)
-
-from utils.logs.debug_log import debug_log, enable_debug
+from utils.logs.debug_log import debug_log
 from utils.logs.pretty_log import pretty_log
 
 # enable_debug(f"{__name__}.dex_listener")
@@ -32,6 +26,27 @@ emoji_map = {
     "gigantamax": "gigantamax",
     "goldenmega": "golden mega",
     "goldengigantamax": "golden gigantamax",
+}
+
+pokemon_types = {
+    "normal",
+    "fire",
+    "water",
+    "electric",
+    "grass",
+    "ice",
+    "fighting",
+    "poison",
+    "ground",
+    "flying",
+    "psychic",
+    "bug",
+    "rock",
+    "ghost",
+    "dragon",
+    "dark",
+    "steel",
+    "fairy",
 }
 
 
@@ -89,19 +104,56 @@ def extract_rarity_from_embed(embed) -> str:
     return ""
 
 
+def extract_type_from_embed(embed) -> str:
+    """Return the embed's type field as underscore-separated type names."""
+    fields = getattr(embed, "fields", None)
+    if fields is None and isinstance(embed, dict):
+        fields = embed.get("fields", [])
+
+    for field in fields or []:
+        name = (
+            field.get("name")
+            if isinstance(field, dict)
+            else getattr(field, "name", None)
+        )
+        value = (
+            field.get("value")
+            if isinstance(field, dict)
+            else getattr(field, "value", None)
+        )
+        if not name or name.lower() != "type" or not value:
+            continue
+
+        found_types = []
+        for match in re.finditer(r"<a?:([a-zA-Z0-9_]+):\d+>", value):
+            emoji_name = match.group(1).lower()
+            if emoji_name.endswith("type"):
+                emoji_name = emoji_name[:-4]
+            if emoji_name in pokemon_types and emoji_name not in found_types:
+                found_types.append(emoji_name)
+
+        if not found_types:
+            type_pattern = (
+                r"(?<![a-z])("
+                + "|".join(sorted(pokemon_types))
+                + r")(?![a-z])"
+            )
+            for match in re.finditer(type_pattern, value, re.IGNORECASE):
+                pokemon_type = match.group(1).lower()
+                if pokemon_type not in found_types:
+                    found_types.append(pokemon_type)
+
+        return "_".join(found_types)
+
+    return ""
+
+
 async def dex_listener(bot, message: discord.Message):
     """Listens to dex command and updates the image link in the market value cache if it differs from the one in the command output."""
     embed = message.embeds[0] if message.embeds else None
     if not embed:
         return
 
-    from utils.cache.pokemon_cache import (
-        fetch_dex_number_cache,
-        fetch_image_link_cache,
-        fetch_rarity_cache,
-    )
-
-    embed_title = embed.title if embed.title else ""
     embed_author_name = embed.author.name if embed.author else ""
     pokemon_name, dex_number = extract_pokemon_name_and_dex(embed_author_name)
     if not pokemon_name:
@@ -110,38 +162,17 @@ async def dex_listener(bot, message: discord.Message):
         )
         return
     
-    # Fetch all cache values once upfront
     embed_image_url = embed.image.url if embed.image else None
-    image_link_cache = fetch_image_link_cache(pokemon_name)
-    old_dex_number = fetch_dex_number_cache(pokemon_name)
-    old_rarity = fetch_rarity_cache(pokemon_name)
     rarity = extract_rarity_from_embed(embed)
+    pokemon_type = extract_type_from_embed(embed)
 
-    # Collect all updates to apply in one call
-    updates = {}
-    update_logs = []
-    
-    if embed_image_url and image_link_cache != embed_image_url:
-        updates["image_link"] = embed_image_url
-        update_logs.append(
-            f"Updated image link for {pokemon_name} to {embed_image_url} based on mh lookup command output."
-        )
-    
-    if dex_number and str(old_dex_number) != str(dex_number):
-        updates["dex_number"] = int(dex_number)
-        update_logs.append(
-            f"Updated dex number for {pokemon_name} to {dex_number} based on mh lookup command output."
-        )
-    
-    if rarity and old_rarity != rarity:
-        updates["rarity"] = rarity
-        update_logs.append(
-            f"Updated rarity for {pokemon_name} to {rarity}."
-        )
-    
-    # Apply all updates in a single call
-    if updates:
-        await update_market_value(bot, pokemon_name, **updates)
-        for log_msg in update_logs:
-            debug_log(log_msg)
-            pretty_log("info", log_msg)
+    updates = {
+        "dex_number": int(dex_number) if dex_number else None,
+        "rarity": rarity or None,
+        "image_link": embed_image_url,
+        "pokemon_type": pokemon_type or None,
+    }
+    if any(value is not None for value in updates.values()):
+        await update_pokemon_dex_info(bot, pokemon_name, **updates)
+        debug_log(f"Updated dex details for {pokemon_name}: {updates}")
+        pretty_log("info", f"Updated dex details for {pokemon_name}.")

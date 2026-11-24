@@ -4,11 +4,14 @@ import discord
 
 from utils.logs.pretty_log import pretty_log
 
+_pokemon_type_column_ready = False
+
 # SQL SCRIPT
 """CREATE TABLE pokemons (
     pokemon_name TEXT PRIMARY KEY,
     dex_number INT,
     rarity TEXT,
+    pokemon_type TEXT,
     current_listing BIGINT,
     lowest_market BIGINT,
     true_lowest BIGINT,
@@ -146,6 +149,75 @@ async def update_market_value(
         )
 
 
+async def update_pokemon_dex_info(
+    bot: discord.Client,
+    pokemon_name: str,
+    dex_number: int | None = None,
+    rarity: str | None = None,
+    image_link: str | None = None,
+    pokemon_type: str | None = None,
+):
+    global _pokemon_type_column_ready
+
+    try:
+        async with bot.pg_pool.acquire() as conn:
+            if not _pokemon_type_column_ready:
+                await conn.execute(
+                    "ALTER TABLE pokemons ADD COLUMN IF NOT EXISTS pokemon_type TEXT;"
+                )
+                _pokemon_type_column_ready = True
+            status = await conn.execute(
+                """
+                INSERT INTO pokemons (
+                    pokemon_name, dex_number, rarity, image_link, pokemon_type
+                )
+                VALUES ($1, $2, $3, $4, $5)
+                ON CONFLICT (pokemon_name) DO UPDATE SET
+                    dex_number = COALESCE(EXCLUDED.dex_number, pokemons.dex_number),
+                    rarity = COALESCE(EXCLUDED.rarity, pokemons.rarity),
+                    image_link = COALESCE(EXCLUDED.image_link, pokemons.image_link),
+                    pokemon_type = COALESCE(EXCLUDED.pokemon_type, pokemons.pokemon_type),
+                    last_updated = CURRENT_TIMESTAMP
+                WHERE
+                    (EXCLUDED.dex_number IS NOT NULL AND pokemons.dex_number IS DISTINCT FROM EXCLUDED.dex_number)
+                    OR (EXCLUDED.rarity IS NOT NULL AND pokemons.rarity IS DISTINCT FROM EXCLUDED.rarity)
+                    OR (EXCLUDED.image_link IS NOT NULL AND pokemons.image_link IS DISTINCT FROM EXCLUDED.image_link)
+                    OR (EXCLUDED.pokemon_type IS NOT NULL AND pokemons.pokemon_type IS DISTINCT FROM EXCLUDED.pokemon_type);
+                """,
+                pokemon_name.lower(),
+                dex_number,
+                rarity,
+                image_link,
+                pokemon_type,
+            )
+
+        from utils.cache.pokemon_cache import update_pokemon_dex_info_in_cache
+
+        update_pokemon_dex_info_in_cache(
+            pokemon_name=pokemon_name,
+            dex_number=dex_number,
+            rarity=rarity,
+            image_link=image_link,
+            pokemon_type=pokemon_type,
+        )
+        if status.endswith("0"):
+            pretty_log(
+                message=f"ℹ️ Dex details for Pokémon '{pokemon_name}' already match the database.",
+                tag="db",
+            )
+        else:
+            pretty_log(
+                message=f"✅ Updated dex details for Pokémon '{pokemon_name}' in database.",
+                tag="db",
+            )
+    except Exception as e:
+        pretty_log(
+            message=f"❌ Error updating dex details for Pokémon '{pokemon_name}': {e}",
+            tag="db",
+        )
+        raise
+
+
 async def fetch_all_pokemons(bot: discord.Client):
     try:
         async with bot.pg_pool.acquire() as conn:
@@ -155,6 +227,7 @@ async def fetch_all_pokemons(bot: discord.Client):
                     "pokemon_name": row["pokemon_name"],
                     "dex_number": row["dex_number"],
                     "rarity": row["rarity"],
+                    "pokemon_type": row.get("pokemon_type"),
                     "current_listing": row["current_listing"],
                     "lowest_market": row["lowest_market"],
                     "true_lowest": row["true_lowest"],
