@@ -1,3 +1,5 @@
+import re
+
 from constants.aesthetics import *
 from constants.paldea_galar_dict import dex, rarity_meta
 from constants.pokemons import *
@@ -155,6 +157,13 @@ def strip_prefixes(pokemon_name: str) -> str:
     return pokemon_name.strip().title()
 
 
+def _strip_dex_number_suffix(pokemon_name: str) -> tuple[str, str | None]:
+    match = re.search(r"\s*#(\d+)\s*$", pokemon_name)
+    if not match:
+        return pokemon_name.strip(), None
+    return pokemon_name[: match.start()].strip(), match.group(1)
+
+
 # ✨───────────────────────────────────────────────
 #            🎨 Display Helpers
 # ✨───────────────────────────────────────────────
@@ -163,6 +172,7 @@ def strip_prefixes(pokemon_name: str) -> str:
 def get_display_name(pokemon_name: str, dex: bool = False) -> str:
     """Returns display name with rarity emoji."""
 
+    pokemon_name, embedded_dex = _strip_dex_number_suffix(pokemon_name)
     rarity = get_rarity(pokemon_name)
     rarity_emoji = rarity_meta.get(rarity, {}).get("emoji", "") if rarity else ""
 
@@ -170,7 +180,7 @@ def get_display_name(pokemon_name: str, dex: bool = False) -> str:
     display_name = f"{rarity_emoji} {stripped_name}".strip()
 
     if dex:
-        dex_number = get_dex_number_by_name(pokemon_name)
+        dex_number = embedded_dex or get_dex_number_by_name(pokemon_name)
         if dex_number:
             display_name = f"{display_name} #{dex_number}"
 
@@ -196,7 +206,8 @@ def format_price_w_coin(n: int) -> str:
 def get_rarity(pokemon: str):
     """Determines Pokémon rarity from its name."""
 
-    name = pokemon.lower()
+    name, _ = _strip_dex_number_suffix(pokemon)
+    name = name.lower()
 
     if "golden" in name:
         return "golden"
@@ -213,7 +224,7 @@ def get_rarity(pokemon: str):
     if "gigantamax" in name:
         return "gigantamax"
 
-    if "mega" in name and "yanmega" not in name and "meganium" not in name:
+    if name.startswith(("mega ", "mega-")):
         return "mega"
 
     if name in legendary_set:

@@ -54,7 +54,8 @@ def determine_rarity_from_name_and_author_icon(
     if rarity == "golden":
         if "mega " in poke_name.lower():
             rarity = "golden mega"
-    if rarity == "unknown":
+    if rarity in ("unknown", "event_exclusive"):
+        rarity = "unknown"
         if "shiny mega " in poke_name.lower():
             rarity = "shiny mega"
         elif (
@@ -64,7 +65,7 @@ def determine_rarity_from_name_and_author_icon(
             rarity = "shiny gigantamax"
         elif "shiny" in poke_name.lower():
             rarity = "shiny"
-        elif "mega" in poke_name.lower():
+        elif poke_name.lower().startswith(("mega ", "mega-")):
             rarity = "mega"
         elif "gigantamax-" in poke_name.lower() or "eternamax-" in poke_name.lower():
             rarity = "gigantamax"
