@@ -55,8 +55,13 @@ def extract_event_hatches(content: str) -> list[str]:
     if hatch_start == -1:
         return []
 
+    hatch_text = content[hatch_start:]
+    hatch_end = re.search(r"!", hatch_text)
+    if hatch_end:
+        hatch_text = hatch_text[: hatch_end.start()]
+
     exclusive_names = {name.casefold() for name in EVENT_EGG_EXCLUSIVES}
-    bold_text = re.findall(r"\*\*([^*]+)\*\*", content[hatch_start:])
+    bold_text = re.findall(r"\*\*([^*]+)\*\*", hatch_text)
     return [
         name.strip()
         for name in bold_text

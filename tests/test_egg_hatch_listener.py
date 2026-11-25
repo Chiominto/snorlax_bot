@@ -61,6 +61,18 @@ class EggHatchRewardTests(unittest.IsolatedAsyncioTestCase):
             all(call.kwargs["points"] == 2 for call in add_points.await_args_list)
         )
 
+    def test_ignores_buddy_name_after_hatch_announcement(self):
+        content = (
+            "_.demon._ just hatched a Pancham! You have 262 eggs left.\n"
+            "- **Shiny Tadbulb** gained 2,500 EXP!\n"
+            "- Congratulations! Your **Shiny Tadbulb** is now level 68."
+        )
+
+        self.assertEqual(
+            egg_hatch_listener.extract_event_hatches(content),
+            [],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
