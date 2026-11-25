@@ -11,6 +11,10 @@ from utils.cache.cache_list import clear_processed_ids_cache
 from utils.cache.central_cache_loader import load_all_cache
 from utils.db.get_pg_pool import get_pg_pool
 from utils.functions.restore_views import restore_giveaway_views
+from utils.logs.discord_rate_limit import (
+    RateLimitCommandTree,
+    install_discord_rate_limit_logging,
+)
 from utils.logs.pretty_log import pretty_log, set_bot
 
 # ---- Intents / Bot ----
@@ -18,7 +22,13 @@ intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
 intents.guilds = True
-bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
+install_discord_rate_limit_logging()
+bot = commands.Bot(
+    command_prefix="!",
+    intents=intents,
+    help_command=None,
+    tree_cls=RateLimitCommandTree,
+)
 set_bot(bot)
 
 

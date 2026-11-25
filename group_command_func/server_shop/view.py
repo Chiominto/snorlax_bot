@@ -15,6 +15,7 @@ from utils.cache.cache_list import server_shop_cache
 from utils.db.server_shop_db import format_item_name
 from utils.functions.role_checks import *
 from utils.functions.webhook_func import send_webhook_log
+from utils.logs.discord_rate_limit import log_interaction_rate_limit
 from utils.logs.pretty_log import pretty_log
 from utils.functions.burger_shop import check_burger_shop
 from .buy import fetch_dex, is_shop_closed, is_shop_opened
@@ -242,6 +243,8 @@ async def shop_view_func(
             )
             paginator.message = sent_message  # Store the sent message in the paginator
     except Exception as e:
+        if log_interaction_rate_limit(interaction, e, stage="shop view"):
+            return
         pretty_log(
             "error",
             f"Error in shop_view_func: {e}",

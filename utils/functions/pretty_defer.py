@@ -1,6 +1,7 @@
 import discord
 
 from constants.aesthetics import *
+from utils.logs.discord_rate_limit import log_interaction_rate_limit
 from utils.logs.pretty_log import pretty_log
 
 LOADING_EMOJI = Emojis.loading
@@ -264,7 +265,12 @@ async def pretty_defer(
                 ephemeral=ephemeral,
             )
     except Exception as e:
-        pretty_log("❌ ERROR", f"[pretty_defer] initial send failed: {e}")
+        if not log_interaction_rate_limit(
+            interaction,
+            e,
+            stage="pretty_defer initial response",
+        ):
+            pretty_log("❌ ERROR", f"[pretty_defer] initial send failed: {e}")
 
     handle = PrettyDeferHandle(interaction, msg, ephemeral=ephemeral)
     if view:
