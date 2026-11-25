@@ -32,7 +32,7 @@ from utils.db.server_currency_db import (
 )
 from utils.logs.pretty_log import pretty_log
 from utils.functions.burger_shop import is_burger_shop_ongoing
-
+from utils.listener_func.quest_helper_listener import send_meal_log
 # 1day in seconds
 PRAY_COOLDOWN = 24 * 60 * 60
 blessing_phrases = [
@@ -155,6 +155,9 @@ async def handle_pray_autoresponder(bot, message: discord.Message):
             total_currency = server_currency_cache[user.id]["currency"]
             extra_meal_str = f"\n> - Bonus: You received **{extra_points} {CURRENCY_EMOJI}** for your efforts! You now have **{total_currency} {CURRENCY_EMOJI}** in total."
             fry_point_reward_str += extra_meal_str
+            await send_meal_log(
+                bot, user, message, extra_points, total_currency, "pray_bonus_reward"
+            )
         content = f"{phrase}\n{fry_point_reward_str}"
         embed = discord.Embed(
             title="A Blessing from the Fries God",

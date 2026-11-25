@@ -226,8 +226,13 @@ async def add_points_to_member(
 
     # Send log to log channel
     log_channel = bot.get_channel(BOT_LOG_ID)
+    if catch_type == "Shiny Egg Exclusive":
+        title = "Rare Hatch Detected"
+    else:
+        title = "Rare Catch Detected"
+
     embed = discord.Embed(
-        title="Rare Catch Detected",
+        title=title,
         url=message.jump_url,
         color=embed_color,
         description=(

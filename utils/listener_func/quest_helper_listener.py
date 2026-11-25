@@ -1,5 +1,6 @@
+from datetime import datetime
 from random import randint
-
+from unittest.mock import DEFAULT
 
 import discord
 
@@ -7,34 +8,72 @@ from constants.celestial_constants import (
     CELESTIAL_ROLES,
     CELESTIAL_SERVER_ID,
     CELESTIAL_TEXT_CHANNELS,
+    DEFAULT_EMBED_COLOR,
     KHY_USER_ID,
-    POKEMEOW_APPLICATION_ID
+    POKEMEOW_APPLICATION_ID,
 )
-from constants.server_currency import (
-    CURRENCY_EMOJI,
-    CURRENCY_NAME,
-)
+from constants.server_currency import CURRENCY_EMOJI, CURRENCY_NAME
 from utils.cache.cache_list import server_currency_cache
 from utils.db.server_currency_db import (
     update_currency,
     upsert_server_currency,
     user_exists_in_server_currency,
 )
-
-from utils.functions.pokemeow_reply import get_pokemeow_reply_member, get_pokemeow_reply_two
-from utils.logs.debug_log import debug_log, enable_debug
-from utils.functions.webhook_func import send_webhook_log
 from utils.functions.burger_shop import is_burger_shop_ongoing
+from utils.functions.pokemeow_reply import (
+    get_pokemeow_reply_member,
+    get_pokemeow_reply_two,
+)
+from utils.functions.webhook_func import send_webhook_log
+from utils.listener_func.rarespawn_listener import BOT_LOG_ID
+from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
 
-#enable_debug(f"{__name__}.quest_helper_listener")
+# enable_debug(f"{__name__}.quest_helper_listener")
 
 points = 1
 
 
-async def quest_helper_listener(
-    bot: discord.Client, message: discord.Message
+async def send_meal_log(
+    bot: discord.Client,
+    member: discord.Member,
+    message: discord.Message,
+    points: int,
+    new_balance: int,
+    context: str,
 ):
+    # Send log to log channel
+    if context == "quest_helper":
+        title = "Quest Helper Reward"
+    else:
+        title = "Pray Bonus Reward"
+
+    log_channel = bot.get_channel(BOT_LOG_ID)
+    embed = discord.Embed(
+        title=title,
+        url=message.jump_url,
+        color=DEFAULT_EMBED_COLOR,
+        description=(
+            f"- **Member:** {member.mention}\n"
+            f"- **Reward:** {points} {CURRENCY_EMOJI}\n"
+            f"- **New Balance:** {new_balance} {CURRENCY_EMOJI}\n"
+        ),
+        timestamp=datetime.now(),
+    )
+    embed.set_author(name=member.display_name, icon_url=member.display_avatar.url)
+    embed.set_thumbnail(url=member.display_avatar.url)
+
+    if log_channel:
+        await log_channel.send(embed=embed)
+    else:
+        pretty_log(
+            "info",
+            "Log channel not found for quest helper reward.",
+            label="Quest Helper Listener",
+        )
+
+
+async def quest_helper_listener(bot: discord.Client, message: discord.Message):
     if message.author.id != POKEMEOW_APPLICATION_ID:
         pretty_log(
             "info",
@@ -165,6 +204,7 @@ async def quest_helper_listener(
             "info",
             f"Sent quest helper reward for {member_name} ({member_id}).",
         )
+        await send_meal_log(bot, member, message, points, new_balance, "quest_helper")
     else:
         pretty_log(
             "info",

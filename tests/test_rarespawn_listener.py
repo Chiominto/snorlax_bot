@@ -112,6 +112,49 @@ class RareSpawnMemberTests(unittest.IsolatedAsyncioTestCase):
             )
         )
 
+    async def test_reward_log_is_sent_before_public_announcement(self):
+        send_order = []
+        log_channel = SimpleNamespace(
+            send=AsyncMock(side_effect=lambda **kwargs: send_order.append("log"))
+        )
+        public_channel = SimpleNamespace(
+            send=AsyncMock(side_effect=lambda **kwargs: send_order.append("public"))
+        )
+        bot = SimpleNamespace(get_channel=Mock(return_value=log_channel))
+        member = SimpleNamespace(
+            id=123,
+            name="_.demon._3",
+            mention="<@123>",
+            display_name="demon",
+            display_avatar=SimpleNamespace(url="https://example.com/avatar.png"),
+        )
+        message = SimpleNamespace(
+            embeds=[],
+            jump_url="https://discord.com/channels/1/2/3",
+            channel=public_channel,
+        )
+
+        with (
+            patch.object(
+                rarespawn_listener,
+                "server_currency_cache",
+                {123: {"currency": 10}},
+            ),
+            patch.object(
+                rarespawn_listener, "update_currency", new_callable=AsyncMock
+            ),
+        ):
+            await rarespawn_listener.add_points_to_member(
+                bot=bot,
+                member=member,
+                points=1,
+                display_pokemon_name="Landorus",
+                message=message,
+                catch_type="Legendary",
+            )
+
+        self.assertEqual(send_order, ["log", "public"])
+
 
 if __name__ == "__main__":
     unittest.main()

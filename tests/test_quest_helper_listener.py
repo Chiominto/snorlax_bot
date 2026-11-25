@@ -70,6 +70,7 @@ class QuestHelperRewardTests(unittest.IsolatedAsyncioTestCase):
             patch.object(quest_helper_listener, "server_currency_cache", {123: {"currency": 42}}),
             patch.object(quest_helper_listener, "update_currency", new_callable=AsyncMock) as update,
             patch.object(quest_helper_listener, "pretty_log"),
+            patch.object(quest_helper_listener, "send_meal_log", new_callable=AsyncMock),
         ):
             await quest_helper_listener.quest_helper_listener(bot, message)
 
