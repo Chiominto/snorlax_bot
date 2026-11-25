@@ -24,7 +24,7 @@ from utils.functions.pokemeow_reply import (
 from utils.functions.webhook_func import send_webhook_log
 from utils.logs.debug_log import debug_log, enable_debug
 from utils.logs.pretty_log import pretty_log
-
+from utils.listener_func.quest_helper_listener import send_meal_log
 # enable_debug(f"{__name__}.drop_donate_listener")
 
 points = 2
@@ -144,6 +144,7 @@ async def drop_donate_listener(bot: discord.Client, message: discord.Message):
                     "info",
                     f"Created server currency entry for {member_name} ({member_id}) with {points} {CURRENCY_NAME}.",
                 )
+
         else:
             # Update balance
             current_balance = user_currency_info.get("currency", 0)
@@ -167,6 +168,14 @@ async def drop_donate_listener(bot: discord.Client, message: discord.Message):
         pretty_log(
             "info",
             f"Sent drop-donate reward for {member_name} ({member_id}).",
+        )
+        await send_meal_log(
+            bot=bot,
+            member=member,
+            message=message,
+            points=points,
+            new_balance=new_balance,
+            context="drop_donation",
         )
     else:
         pretty_log(

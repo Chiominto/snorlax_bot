@@ -45,8 +45,10 @@ async def send_meal_log(
     # Send log to log channel
     if context == "quest_helper":
         title = "Quest Helper Reward"
-    else:
+    elif context == "pray_bonus_reward":
         title = "Pray Bonus Reward"
+    else:
+        title = "Drop Donation Reward"
 
     log_channel = bot.get_channel(BOT_LOG_ID)
     embed = discord.Embed(
