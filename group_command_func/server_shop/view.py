@@ -13,7 +13,6 @@ from constants.celestial_constants import (
 from constants.server_currency import CURRENCY_EMOJI, CURRENCY_NAME, SHOP_COLOR
 from utils.cache.cache_list import server_shop_cache
 from utils.db.server_shop_db import format_item_name
-from utils.functions.pretty_defer import pretty_defer
 from utils.functions.role_checks import *
 from utils.functions.webhook_func import send_webhook_log
 from utils.logs.pretty_log import pretty_log
@@ -137,33 +136,28 @@ async def shop_view_func(
         return
 
     try:
-        item_str = "All items"
         all_items = True
         if item_name:
-            item_str = item_name
             all_items = False
-        # Defer the interaction to allow more time for processing
-        loader = await pretty_defer(
-            interaction=interaction,
-            content=f"Fetching details for {item_str}...",
-            ephemeral=False,
-        )
+        await interaction.response.defer(ephemeral=False, thinking=True)
         if not all_items:
             # Check if item exists
             from utils.cache.server_shop_cache import fetch_item_id_by_name
 
             item_id = fetch_item_id_by_name(item_name)
             if not item_id:
-                await loader.error(
-                    f"No item with the name '{item_name}' exists in the server shop."
+                await interaction.followup.send(
+                    f"No item with the name '{item_name}' exists in the server shop.",
+                    ephemeral=True,
                 )
                 return
 
             # Get item details
             item_info = server_shop_cache.get(item_id)
             if not item_info:
-                await loader.error(
-                    "Failed to retrieve item details from cache. Please try again later."
+                await interaction.followup.send(
+                    "Failed to retrieve item details from cache. Please try again later.",
+                    ephemeral=True,
                 )
                 return
             price = item_info.get("price", 0)
@@ -205,7 +199,7 @@ async def shop_view_func(
             )
             if image_link:
                 embed.set_thumbnail(url=image_link)
-            await loader.success(embed=embed, content="")
+            await interaction.edit_original_response(embed=embed, content="")
             return
 
         else:
@@ -215,7 +209,10 @@ async def shop_view_func(
 
             items = fetch_all_shop_items_cache()
             if not items:
-                await loader.error("The server shop is currently empty.")
+                await interaction.followup.send(
+                    "The server shop is currently empty.",
+                    ephemeral=True,
+                )
                 return
 
             # Convert dict to list and include item_id in each item dict, then sort by price then name
@@ -238,7 +235,7 @@ async def shop_view_func(
                 timeout=120,
             )
             embed = await paginator.get_embed()
-            sent_message = await loader.success(
+            sent_message = await interaction.edit_original_response(
                 embed=embed,
                 content="",
                 view=paginator,
