@@ -1,7 +1,7 @@
 from .aesthetics import Emojis
 from .celestial_constants import CELESTIAL_EMOJIS, DEFAULT_EMBED_COLOR
 
-EVENT_EGG_EXCLUSIVES = ["shiny tadbulb", "shiny nymble"]
+EVENT_EGG_EXCLUSIVES = ["shiny perrserker", "shiny impidimp"]
 
 
 SHOP_COLOR  = DEFAULT_EMBED_COLOR
